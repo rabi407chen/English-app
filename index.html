@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
-    <title>AI 英文全能助手 (V7.3 可編輯版)</title>
+    <title>AI 英文全能助手 (V7.4 完美筆記版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -23,7 +23,7 @@
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
         .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 2rem; margin-bottom: 2rem; text-align: center; position: relative; }
         
-        /* 輸入控制 */
+        /* 輸入與控制 */
         .upload-area { border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 2rem; transition: border-color 0.2s; cursor: pointer; position: relative; }
         .upload-area:hover { border-color: var(--primary); }
         input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
@@ -32,27 +32,42 @@
         #manual-input-area { display: none; margin-top: 1rem; text-align: left; }
         textarea { width: 100%; height: 200px; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; box-sizing: border-box; }
         
-        /* 閱讀結果區 */
+        /* 結果顯示 */
         #result-container { text-align: left; font-size: 1.1rem; line-height: 2; color: #374151; display: none; user-select: text; -webkit-user-select: text; }
         .paragraph { margin-bottom: 1.5rem; text-align: justify; text-indent: 2rem; }
         .word { cursor: pointer; border-bottom: 1px dotted transparent; transition: all 0.2s; }
         .word:hover { background-color: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
         
-        /* 🔥 編輯器樣式 (New) */
+        /* 編輯器 */
         #editor-container { display: none; text-align: left; }
         #editor-textarea { width: 100%; height: 400px; padding: 1rem; border: 2px solid var(--primary); border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; outline: none; }
-        .edit-controls { display: flex; gap: 10px; margin-bottom: 1rem; justify-content: flex-end; }
 
         /* 側邊欄 */
         .drawer { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background: white; box-shadow: -4px 0 15px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 200; display: flex; flex-direction: column; }
         .drawer.open { right: 0; }
-        .drawer-header { padding: 0; border-bottom: 1px solid #e5e7eb; background: var(--primary); color: white; }
-        .tabs { display: flex; }
+        .drawer-header { padding: 0; border-bottom: 1px solid #e5e7eb; background: var(--primary); color: white; position: relative; }
+        
+        /* 🔥 修復關鍵：確保關閉按鈕層級最高 */
+        .drawer-close {
+            position: absolute;
+            top: 5px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 2rem;
+            color: white;
+            z-index: 999; /* 確保在最上層 */
+            line-height: 1;
+            padding: 5px;
+        }
+
+        .tabs { display: flex; width: 100%; }
         .tab { flex: 1; padding: 1rem; text-align: center; cursor: pointer; font-weight: bold; opacity: 0.7; transition: 0.2s; background: rgba(0,0,0,0.1); }
         .tab.active { background: white; color: var(--primary); opacity: 1; border-top: 3px solid white; }
         .drawer-content { flex: 1; overflow-y: auto; padding: 1rem; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
+        /* 列表樣式 */
         .list-item { background: var(--secondary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; position: relative; cursor: pointer; }
         .list-item:hover { background: #e5e7eb; }
         .item-title { font-weight: bold; color: var(--primary); font-size: 1.1em; }
@@ -154,7 +169,6 @@
             </div>
 
             <div id="result-container"></div>
-            
             <div id="editor-container">
                 <textarea id="editor-textarea"></textarea>
             </div>
@@ -167,7 +181,7 @@
                 <div class="tab active" onclick="switchTab('vocab')" id="tab-vocab">單字本 (<span id="vocab-count">0</span>)</div>
                 <div class="tab" onclick="switchTab('article')" id="tab-article">文章庫</div>
             </div>
-            <span style="position:absolute; top:5px; right:10px; cursor:pointer; font-size:1.5rem; color:white;" onclick="toggleDrawer()">&times;</span>
+            <span class="drawer-close" onclick="toggleDrawer()">&times;</span>
         </div>
         <div class="drawer-content">
             <div id="vocab-content" class="tab-content active">
@@ -189,7 +203,7 @@
 
     <div id="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span><div id="modal-body">載入中...</div></div></div>
 
-    <div id="console-log"><div>System Log V7.3 (Editable) Initialized...</div></div>
+    <div id="console-log"><div>System Log V7.4 (Smart Save) Initialized...</div></div>
 
     <script>
         const converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
@@ -210,6 +224,8 @@
         let savedVocab = JSON.parse(localStorage.getItem('myVocab') || '[]'); 
         let savedArticles = JSON.parse(localStorage.getItem('myArticles') || '[]'); 
         let currentArticleText = ""; 
+        let currentArticleId = null; // 🔥 新增：追蹤目前文章 ID
+
         let quizQuestions = []; let currentQuestionIndex = 0; let score = 0; let isAnswering = false;
 
         const imageInput = document.getElementById('imageInput');
@@ -228,17 +244,13 @@
         updateVocabUI();
         updateArticleUI();
 
-        // === 編輯模式邏輯 (NEW) ===
+        // === 編輯與存檔邏輯 (Updated) ===
         function enableEditMode() {
-            // 切換按鈕區
             document.getElementById('read-mode-header').style.display = 'none';
             document.getElementById('edit-mode-header').style.display = 'flex';
-            // 切換內容區
             resultContainer.style.display = 'none';
             editorContainer.style.display = 'block';
-            // 填入文字
             editorTextarea.value = currentArticleText;
-            log('進入編輯模式');
         }
 
         function cancelEditMode() {
@@ -246,28 +258,63 @@
             document.getElementById('edit-mode-header').style.display = 'none';
             resultContainer.style.display = 'block';
             editorContainer.style.display = 'none';
-            log('取消編輯');
         }
 
         function confirmEditMode() {
             const newText = editorTextarea.value;
             if(!newText.trim()) { alert("文章內容不能為空！"); return; }
-            
-            // 更新核心文字
             currentArticleText = newText;
-            
-            // 重新渲染閱讀介面
-            displayInteractiveText(currentArticleText);
-            
-            // UI 復原
+            displayInteractiveText(currentArticleText, false); // false = 不要重置 ID
             document.getElementById('read-mode-header').style.display = 'flex';
             document.getElementById('edit-mode-header').style.display = 'none';
             resultContainer.style.display = 'block';
             editorContainer.style.display = 'none';
-            
-            log('編輯完成並儲存');
         }
 
+        function saveCurrentArticle() {
+            if (!currentArticleText) { alert("沒有內容可以儲存"); return; }
+            
+            // 🔥 智慧判斷：是更新舊文還是存新文？
+            if (currentArticleId) {
+                const existingIndex = savedArticles.findIndex(a => a.id == currentArticleId);
+                if (existingIndex !== -1) {
+                    const originalTitle = savedArticles[existingIndex].title;
+                    if(confirm(`要覆寫原本的文章「${originalTitle}」嗎？\n(按「取消」則另存為新文章)`)) {
+                        // 更新舊文
+                        savedArticles[existingIndex].content = currentArticleText;
+                        savedArticles[existingIndex].date = new Date().toLocaleDateString();
+                        localStorage.setItem('myArticles', JSON.stringify(savedArticles));
+                        updateArticleUI();
+                        alert("文章更新成功！");
+                        return;
+                    }
+                }
+            }
+
+            // 另存新檔
+            const title = prompt("請為這篇文章輸入標題：", "未命名文章");
+            if (title) {
+                const newId = Date.now();
+                const newArticle = { id: newId, title: title, content: currentArticleText, date: new Date().toLocaleDateString() };
+                savedArticles.unshift(newArticle);
+                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
+                updateArticleUI();
+                currentArticleId = newId; // 更新當前 ID
+                alert("文章已儲存！");
+            }
+        }
+
+        function loadArticle(id) {
+            const article = savedArticles.find(a => a.id == id);
+            if (article) { 
+                log(`載入文章: ${article.title}`); 
+                currentArticleId = id; // 🔥 紀錄目前 ID
+                displayInteractiveText(article.content, false); 
+                toggleDrawer(); 
+            }
+        }
+
+        // === 其他核心功能 ===
         function switchInputMode(mode) {
             document.getElementById('image-input-area').style.display = mode === 'image' ? 'block' : 'none';
             document.getElementById('manual-input-area').style.display = mode === 'text' ? 'block' : 'none';
@@ -278,25 +325,8 @@
         function processManualText() {
             const text = document.getElementById('manualText').value;
             if (!text.trim()) { alert("請輸入文字！"); return; }
-            log("處理手動輸入文字...");
+            currentArticleId = null; // 新文章，重置 ID
             displayInteractiveText(text);
-        }
-
-        function saveCurrentArticle() {
-            if (!currentArticleText) { alert("沒有內容可以儲存"); return; }
-            const title = prompt("請為這篇文章輸入標題：", "未命名文章");
-            if (title) {
-                const newArticle = { id: Date.now(), title: title, content: currentArticleText, date: new Date().toLocaleDateString() };
-                savedArticles.unshift(newArticle);
-                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
-                updateArticleUI();
-                alert("文章已儲存！");
-            }
-        }
-
-        function loadArticle(id) {
-            const article = savedArticles.find(a => a.id == id);
-            if (article) { log(`載入文章: ${article.title}`); displayInteractiveText(article.content); toggleDrawer(); }
         }
 
         function deleteArticle(id, event) {
@@ -329,6 +359,7 @@
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return; 
             resetUI(); log(`圖片: ${file.name}`);
+            currentArticleId = null; // 新圖片，重置 ID
             if (document.getElementById('twoColumnMode').checked) processTwoColumns(file); else performCloudOCR(file);
         });
 
@@ -376,16 +407,15 @@
             } catch (e) { log(e.message, 'error'); return null; } 
         }
 
-        function displayInteractiveText(text) {
+        function displayInteractiveText(text, resetId = true) {
             currentArticleText = text; 
-            
-            // 確保 UI 狀態正確 (隱藏編輯器，顯示閱讀器)
+            if(resetId) currentArticleId = null; // 預設重置 ID，除非 loadArticle 說不要
+
             resultCard.style.display = 'block'; 
             resultContainer.style.display = 'block'; 
             editorContainer.style.display = 'none';
             document.getElementById('read-mode-header').style.display = 'flex';
             document.getElementById('edit-mode-header').style.display = 'none';
-
             uploadCard.style.display = 'none';
             quizCard.style.display = 'none';
 
@@ -413,6 +443,7 @@
             uploadCard.style.display = 'block'; 
             drawer.classList.remove('open'); 
             currentArticleText = "";
+            currentArticleId = null;
             document.getElementById('manualText').value = ""; 
         }
 
