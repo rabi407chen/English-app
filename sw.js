@@ -1,6 +1,4 @@
-const CACHE_NAME = 'ai-english-v3'; // 版本號改為 v3
-// ...其餘程式碼保持不變 (請使用 V6.1 修復版那一版)
-// 為了保險，下方會提供完整的 sw.js 讓你複製
+const CACHE_NAME = 'ai-english-v4'; // 升級為 v4
 const ASSETS = [
     './',
     './index.html',
@@ -22,7 +20,13 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
-    if (url.hostname.includes('ocr.space') || url.hostname.includes('dictionaryapi.dev') || url.hostname.includes('mymemory.translated.net')) return;
+    // 排除 API 和 CDN (OpenCC)
+    if (url.hostname.includes('ocr.space') || 
+        url.hostname.includes('dictionaryapi.dev') || 
+        url.hostname.includes('mymemory.translated.net') ||
+        url.hostname.includes('jsdelivr.net')) return; // 新增 jsdelivr 排除
+    
     if (e.request.method === 'POST') return;
+    
     e.respondWith(caches.match(e.request).then((response) => response || fetch(e.request)));
 });
