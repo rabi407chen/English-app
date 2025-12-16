@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-english-v4'; // 升級為 v4
+const CACHE_NAME = 'ai-english-v5'; // 升級為 v5
 const ASSETS = [
     './',
     './index.html',
@@ -20,11 +20,10 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
-    // 排除 API 和 CDN (OpenCC)
     if (url.hostname.includes('ocr.space') || 
         url.hostname.includes('dictionaryapi.dev') || 
         url.hostname.includes('mymemory.translated.net') ||
-        url.hostname.includes('jsdelivr.net')) return; // 新增 jsdelivr 排除
+        url.hostname.includes('jsdelivr.net')) return;
     
     if (e.request.method === 'POST') return;
     
