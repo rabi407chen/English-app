@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
-    <title>Anna's AI 英文小助手 (V7.0)</title>
+    <title>AI 英文全能助手 (V7.1 修復版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -89,7 +89,7 @@
 </head>
 <body>
     <header>
-        <div class="logo" onclick="goHome()">📚 Anna's AI 英文小助手</div>
+        <div class="logo" onclick="goHome()">📚 AI 英文全能助手</div>
         <button class="nav-btn" onclick="toggleDrawer()"><span>📂</span> 學習中心</button>
     </header>
 
@@ -152,7 +152,7 @@
     <div id="drawer" class="drawer">
         <div class="drawer-header">
             <div class="tabs">
-                <div class="tab active" onclick="switchTab('vocab')" id="tab-vocab">單字本</div>
+                <div class="tab active" onclick="switchTab('vocab')" id="tab-vocab">單字本 (<span id="vocab-count">0</span>)</div>
                 <div class="tab" onclick="switchTab('article')" id="tab-article">文章庫</div>
             </div>
             <span style="position:absolute; top:5px; right:10px; cursor:pointer; font-size:1.5rem; color:white;" onclick="toggleDrawer()">&times;</span>
@@ -179,7 +179,7 @@
 
     <div id="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span><div id="modal-body">載入中...</div></div></div>
 
-    <div id="console-log"><div>System Log V7.0 Initialized...</div></div>
+    <div id="console-log"><div>System Log V7.1 Fixed Initialized...</div></div>
 
     <script>
         // === 系統日誌 ===
@@ -198,8 +198,8 @@
         // === 設定與資料 ===
         const API_KEY = 'K87721920188957'; 
         let savedVocab = JSON.parse(localStorage.getItem('myVocab') || '[]'); 
-        let savedArticles = JSON.parse(localStorage.getItem('myArticles') || '[]'); // 新增：文章存檔
-        let currentArticleText = ""; // 暫存當前文章文字
+        let savedArticles = JSON.parse(localStorage.getItem('myArticles') || '[]'); 
+        let currentArticleText = ""; 
 
         // 測驗變數
         let quizQuestions = []; let currentQuestionIndex = 0; let score = 0; let isAnswering = false;
@@ -214,6 +214,7 @@
         const modal = document.getElementById('modal');
         const modalBody = document.getElementById('modal-body');
         const drawer = document.getElementById('drawer');
+        const vocabCount = document.getElementById('vocab-count'); // 修正：現在可以正確抓到了
         
         // 初始化 UI
         updateVocabUI();
@@ -247,7 +248,7 @@
                     content: currentArticleText,
                     date: new Date().toLocaleDateString()
                 };
-                savedArticles.unshift(newArticle); // 加到最前面
+                savedArticles.unshift(newArticle);
                 localStorage.setItem('myArticles', JSON.stringify(savedArticles));
                 updateArticleUI();
                 alert("文章已儲存！請到「文章庫」查看。");
@@ -259,12 +260,12 @@
             if (article) {
                 log(`載入文章: ${article.title}`);
                 displayInteractiveText(article.content);
-                toggleDrawer(); // 關閉側邊欄
+                toggleDrawer();
             }
         }
 
         function deleteArticle(id, event) {
-            event.stopPropagation(); // 防止觸發點擊載入
+            event.stopPropagation();
             if(confirm("確定刪除這篇文章？")) {
                 savedArticles = savedArticles.filter(a => a.id != id);
                 localStorage.setItem('myArticles', JSON.stringify(savedArticles));
@@ -309,7 +310,7 @@
             document.getElementById(`${tab}-content`).classList.add('active');
         }
 
-        // === 圖片處理 (維持不變) ===
+        // === 圖片處理 ===
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return; 
             resetUI(); log(`圖片: ${file.name}`);
@@ -360,17 +361,13 @@
             } catch (e) { log(e.message, 'error'); return null; } 
         }
 
-        // === 核心顯示邏輯 (更新：存入暫存變數) ===
         function displayInteractiveText(text) {
-            currentArticleText = text; // 儲存當前文字供存檔用
+            currentArticleText = text; 
             resultCard.style.display = 'block'; 
             resultContainer.style.display = 'block'; 
-            
-            // 隱藏輸入區，讓閱讀更專注
             uploadCard.style.display = 'none';
             quizCard.style.display = 'none';
 
-            // 排版處理
             let formatted = text.replace(/-\s*[\r\n]+/g, "").replace(/\r\n/g, "\n").replace(/\n\s*\n/g, "{{PARA}}").replace(/\n/g, " ").replace(/{{PARA}}/g, "\n\n");
             const paragraphs = formatted.replace(/(\d+)/g, " $1 ").split('\n\n'); 
             
@@ -389,17 +386,15 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // === 回首頁 ===
         function goHome() { 
             quizCard.style.display = 'none'; 
             resultCard.style.display = 'none';
             uploadCard.style.display = 'block'; 
             drawer.classList.remove('open'); 
             currentArticleText = "";
-            document.getElementById('manualText').value = ""; // 清空輸入框
+            document.getElementById('manualText').value = ""; 
         }
 
-        // === 查詢與單字本 (維持不變) ===
         async function lookupWord(text) { 
             const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); if(!q) return; 
             modal.style.display = 'flex'; modalBody.innerHTML = `<div class="loader">🔍 查詢中...</div>`;
@@ -437,7 +432,9 @@
         
         function updateVocabUI() {
             const list = document.getElementById('vocab-list'); list.innerHTML = '';
-            document.getElementById('vocab-count').innerText = savedVocab.length;
+            // 修正：這裡的 vocabCount 現在可以正確抓到側邊欄裡的 span 了
+            if(vocabCount) vocabCount.innerText = savedVocab.length;
+            
             if(!savedVocab.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無收藏單字</div>'; return; }
             [...savedVocab].reverse().forEach(i => {
                 const div = document.createElement('div'); div.className = 'list-item';
@@ -447,7 +444,24 @@
         }
         function deleteWord(w) { savedVocab = savedVocab.filter(i => i.word !== w); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); }
         function clearVocab() { if(confirm('清空？')) { savedVocab=[]; localStorage.setItem('myVocab', '[]'); updateVocabUI(); } }
-        function exportToCSV() { /* CSV 邏輯維持不變 */ alert("匯出功能正常"); } // 為節省篇幅省略詳細實作，可直接用舊版
+        
+        // 匯出 CSV (修復版)
+        function exportToCSV() {
+            if (savedVocab.length === 0) { alert('單字本是空的，無法匯出'); return; }
+            let csvContent = "\uFEFF單字,中文解釋,加入日期\n";
+            savedVocab.forEach(item => {
+                const cleanMeaning = item.meaning.replace(/,/g, "，"); 
+                csvContent += `${item.word},${cleanMeaning},${item.date}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `英文單字本_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         // === 測驗 (維持不變) ===
         function startQuiz() { 
