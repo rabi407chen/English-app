@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
-    <title>AI 英文全能助手 (V7.6 優化版)</title>
+    <title>AI 英文全能助手 (V7.7 深度學習版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -38,6 +38,10 @@
         .word { cursor: pointer; border-bottom: 1px dotted transparent; transition: all 0.2s; }
         .word:hover { background-color: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
         
+        /* 🔥 解釋區單字互動樣式 (New) */
+        .def-word { cursor: pointer; color: var(--text-dark); transition: color 0.2s; border-bottom: 1px dotted #ccc; }
+        .def-word:hover { color: var(--primary); background-color: #eff6ff; border-bottom-color: var(--primary); }
+
         /* 編輯器 */
         #editor-container { display: none; text-align: left; }
         #editor-textarea { width: 100%; height: 400px; padding: 1rem; border: 2px solid var(--primary); border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; outline: none; }
@@ -75,15 +79,13 @@
         .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
         #console-log { position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; background: #222; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 9999; box-sizing: border-box; border-top: 2px solid #444; opacity: 0.9; }
         
-        /* 🔥 分割調整視窗 (優化版) */
-        #split-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 10000; /* 極高層級 */ }
+        /* 分割調整視窗 */
+        #split-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 10000; }
         .split-content { background: white; padding: 1rem; border-radius: 1rem; width: 95%; max-width: 600px; text-align: center; position: relative; }
         #split-image-container { position: relative; width: 100%; max-height: 55vh; overflow: hidden; margin-bottom: 1rem; border: 2px solid #ddd; background: #333; }
         #split-image { width: 100%; display: block; object-fit: contain; }
         #split-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: red; box-shadow: 0 0 8px rgba(255,255,255,0.8); pointer-events: none; transform: translateX(-50%); }
         .slider-container { display: flex; align-items: center; gap: 10px; padding: 0.5rem 1rem; background: #f0f0f0; border-radius: 10px; }
-        
-        /* 🔥 加大滑桿觸控區 */
         input[type=range] { width: 100%; -webkit-appearance: none; height: 12px; background: #ccc; border-radius: 6px; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 35px; height: 35px; background: var(--primary); border: 3px solid white; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.4); margin-top: -2px; }
 
@@ -94,8 +96,6 @@
         .quiz-btn { padding: 1.5rem; font-size: 1.1rem; background: white; border: 2px solid #e5e7eb; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; color: var(--text-dark); }
         .quiz-btn.correct { background: var(--success); color: white; border-color: var(--success); }
         .quiz-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); }
-        
-        /* 🔥 可收折除錯區 */
         #debug-container { display: none; margin-top: 1rem; padding: 1rem; background: #fff1f2; border-radius: 0.5rem; }
         #debug-content { display: none; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
         .debug-img { max-width: 45%; border: 1px solid #ddd; border-radius: 4px; }
@@ -223,7 +223,7 @@
     </div>
 
     <div id="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span><div id="modal-body">載入中...</div></div></div>
-    <div id="console-log"><div>System Log V7.6 (Better UI) Initialized...</div></div>
+    <div id="console-log"><div>System Log V7.7 (Recursive) Initialized...</div></div>
 
     <script>
         const converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
@@ -270,19 +270,34 @@
         updateVocabUI();
         updateArticleUI();
 
-        // === 新增：除錯區開關 ===
+        // === 新增：將定義文字轉為可點擊 (Recursive Lookup) ===
+        function makeDefinitionInteractive(text) {
+            // 切割文字，保留空白
+            return text.split(/(\s+)/).map(part => {
+                if (/^\s+$/.test(part)) return part; // 空白直接回傳
+                
+                // 去除標點符號，只留英文和撇號(don't)
+                const cleanWord = part.replace(/[^a-zA-Z']/g, "");
+                
+                // 如果是有效單字，包裹 span
+                if (cleanWord.length > 0) {
+                    // escape 單引號，防止 JS 錯誤
+                    const safeWord = cleanWord.replace(/'/g, "\\'"); 
+                    return `<span class="def-word" onclick="lookupWord('${safeWord}')">${part}</span>`;
+                }
+                return part;
+            }).join('');
+        }
+
+        // === 除錯區開關 ===
         function toggleDebugContent() {
-            if(debugContent.style.display === 'flex') {
-                debugContent.style.display = 'none';
-            } else {
-                debugContent.style.display = 'flex';
-            }
+            if(debugContent.style.display === 'flex') { debugContent.style.display = 'none'; } 
+            else { debugContent.style.display = 'flex'; }
         }
 
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return; 
             tempFile = file; 
-            
             if (document.getElementById('twoColumnMode').checked) {
                 const url = URL.createObjectURL(file);
                 splitImage.src = url;
@@ -294,21 +309,9 @@
             }
         });
 
-        splitSlider.addEventListener('input', function() {
-            splitLine.style.left = this.value + '%';
-        });
-
-        function closeSplitModal() {
-            splitModal.style.display = 'none';
-            imageInput.value = ''; 
-        }
-
-        function confirmSplit() {
-            splitModal.style.display = 'none';
-            const ratio = splitSlider.value / 100;
-            log(`確認分割比例: ${ratio}`);
-            processTwoColumns(tempFile, ratio);
-        }
+        splitSlider.addEventListener('input', function() { splitLine.style.left = this.value + '%'; });
+        function closeSplitModal() { splitModal.style.display = 'none'; imageInput.value = ''; }
+        function confirmSplit() { splitModal.style.display = 'none'; const ratio = splitSlider.value / 100; log(`確認分割: ${ratio}`); processTwoColumns(tempFile, ratio); }
 
         async function processTwoColumns(file, splitRatio = 0.5) { 
             resetUI(); log(`圖片: ${file.name}, 分割: ${splitRatio}`);
@@ -317,16 +320,11 @@
                 const img = await loadImage(file); 
                 const leftBlob = await cropImage(img, 0, 0, splitRatio, 1); 
                 const rightBlob = await cropImage(img, splitRatio, 0, 1-splitRatio, 1); 
-                
-                // 顯示除錯區容器
                 debugContainer.style.display = 'block';
                 showDebugImage(leftBlob, `左欄 (${Math.round(splitRatio*100)}%)`); 
                 showDebugImage(rightBlob, `右欄 (${Math.round((1-splitRatio)*100)}%)`);
-                
-                updateStatus("🔍 辨識左欄...", "var(--warning)"); 
-                const leftText = await callOCRSpace(leftBlob); 
-                updateStatus("🔍 辨識右欄...", "var(--warning)"); 
-                const rightText = await callOCRSpace(rightBlob); 
+                updateStatus("🔍 辨識左欄...", "var(--warning)"); const leftText = await callOCRSpace(leftBlob); 
+                updateStatus("🔍 辨識右欄...", "var(--warning)"); const rightText = await callOCRSpace(rightBlob); 
                 const fullText = (leftText || "") + "\n\n" + (rightText || ""); 
                 if (fullText.trim().length > 0) { displayInteractiveText(fullText); updateStatus("✅ 完成", "var(--success)"); } 
                 else { updateStatus("❌ 失敗", "var(--danger)"); }
@@ -352,7 +350,36 @@
         async function callOCRSpace(fileBlob) { const formData = new FormData(); formData.append("apikey", API_KEY); formData.append("language", "eng"); formData.append("isOverlayRequired", "false"); formData.append("file", fileBlob, "image.jpg"); formData.append("OCREngine", "2"); formData.append("scale", "true"); try { const res = await fetch("https://api.ocr.space/parse/image", { method: "POST", body: formData }); const data = await res.json(); if (data.ParsedResults && data.ParsedResults.length > 0) return data.ParsedResults[0].ParsedText; return ""; } catch (e) { log(e.message, 'error'); return null; } }
         function displayInteractiveText(text, resetId = true) { currentArticleText = text; if(resetId) currentArticleId = null; resultCard.style.display = 'block'; resultContainer.style.display = 'block'; editorContainer.style.display = 'none'; document.getElementById('read-mode-header').style.display = 'flex'; document.getElementById('edit-mode-header').style.display = 'none'; uploadCard.style.display = 'none'; quizCard.style.display = 'none'; let formatted = text.replace(/-\s*[\r\n]+/g, "").replace(/\r\n/g, "\n").replace(/\n\s*\n/g, "{{PARA}}").replace(/\n/g, " ").replace(/{{PARA}}/g, "\n\n"); const paragraphs = formatted.replace(/(\d+)/g, " $1 ").split('\n\n'); resultContainer.innerHTML = ''; paragraphs.forEach(p => { if(!p.trim()) return; const div = document.createElement('div'); div.className = 'paragraph'; p.split(/(\s+)/).forEach(w => { const span = document.createElement('span'); span.innerText = w; const clean = w.replace(/[^a-zA-Z]/g, ""); if(clean) { span.className = 'word'; span.onclick = () => { if(!window.getSelection().toString()) lookupWord(clean); }; } div.appendChild(span); }); resultContainer.appendChild(div); }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
         function goHome() { quizCard.style.display = 'none'; resultCard.style.display = 'none'; uploadCard.style.display = 'block'; drawer.classList.remove('open'); currentArticleText = ""; currentArticleId = null; document.getElementById('manualText').value = ""; }
-        async function lookupWord(text) { const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); if(!q) return; modal.style.display = 'flex'; modalBody.innerHTML = `<div class="loader">🔍 查詢中...</div>`; try { const [resEn, resZh] = await Promise.all([ fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${q}`), fetch(`https://api.mymemory.translated.net/get?q=${q}&langpair=en|zh-TW`) ]); const zhData = await resZh.json(); let zhText = zhData.responseData?.translatedText || "失敗"; if(!/[\u4e00-\u9fa5]/.test(zhText) && zhData.matches) zhText = zhData.matches.find(m=>/[\u4e00-\u9fa5]/.test(m.translation))?.translation || zhText; zhText = converter(zhText); const isSaved = savedVocab.some(i => i.word.toLowerCase() === q.toLowerCase()); const btnHtml = `<button id="saveBtn" onclick="toggleSaveWord('${q}', '${zhText}')" class="action-btn ${isSaved?'btn-primary':'btn-outline'}" style="width:auto; padding:0.4rem 1rem;">${isSaved?'⭐ 已收藏':'☆ 收藏'}</button>`; let html = `<div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;"><h2 style="margin:0; color:var(--primary);">${q}</h2><button onclick="speakWord('${q}')" style="background:var(--success); color:white; border:none; border-radius:50%; width:32px; height:32px;">🔊</button><div style="flex:1;"></div>${btnHtml}</div>`; html += `<div style="background:#fff7ed; padding:1rem; border-radius:0.5rem; border-left: 4px solid var(--warning); margin-bottom:1.5rem;"><strong style="font-size:1.2rem;">${zhText}</strong></div>`; if(resEn.ok) { const enData = await resEn.json(); enData[0].meanings.forEach(m => { html += `<div style="margin-bottom:1rem;"><span style="background:#eff6ff; color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:bold;">${m.partOfSpeech}</span>`; m.definitions.slice(0,2).forEach((d,i)=> html+=`<div style="margin:5px 0; color:#444;">${i+1}. ${d.definition}</div>`); html += `</div>`; }); } modalBody.innerHTML = html; } catch(e) { modalBody.innerHTML = '查詢失敗'; } }
+        
+        async function lookupWord(text) { 
+            const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); if(!q) return; 
+            modal.style.display = 'flex'; modalBody.innerHTML = `<div class="loader">🔍 查詢中...</div>`;
+            try {
+                const [resEn, resZh] = await Promise.all([ fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${q}`), fetch(`https://api.mymemory.translated.net/get?q=${q}&langpair=en|zh-TW`) ]);
+                const zhData = await resZh.json(); let zhText = zhData.responseData?.translatedText || "失敗";
+                if(!/[\u4e00-\u9fa5]/.test(zhText) && zhData.matches) zhText = zhData.matches.find(m=>/[\u4e00-\u9fa5]/.test(m.translation))?.translation || zhText;
+                zhText = converter(zhText);
+                const isSaved = savedVocab.some(i => i.word.toLowerCase() === q.toLowerCase());
+                const btnHtml = `<button id="saveBtn" onclick="toggleSaveWord('${q}', '${zhText}')" class="action-btn ${isSaved?'btn-primary':'btn-outline'}" style="width:auto; padding:0.4rem 1rem;">${isSaved?'⭐ 已收藏':'☆ 收藏'}</button>`;
+                let html = `<div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;"><h2 style="margin:0; color:var(--primary);">${q}</h2><button onclick="speakWord('${q}')" style="background:var(--success); color:white; border:none; border-radius:50%; width:32px; height:32px;">🔊</button><div style="flex:1;"></div>${btnHtml}</div>`;
+                html += `<div style="background:#fff7ed; padding:1rem; border-radius:0.5rem; border-left: 4px solid var(--warning); margin-bottom:1.5rem;"><strong style="font-size:1.2rem;">${zhText}</strong></div>`;
+                
+                if(resEn.ok) {
+                    const enData = await resEn.json();
+                    enData[0].meanings.forEach(m => {
+                        html += `<div style="margin-bottom:1rem;"><span style="background:#eff6ff; color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:bold;">${m.partOfSpeech}</span>`;
+                        // 🔥 關鍵修正：將英文解釋經過 makeDefinitionInteractive 處理
+                        m.definitions.slice(0,2).forEach((d,i)=> {
+                            const interactiveDef = makeDefinitionInteractive(d.definition);
+                            html+=`<div style="margin:5px 0; color:#444;">${i+1}. ${interactiveDef}</div>`
+                        });
+                        html += `</div>`;
+                    });
+                }
+                modalBody.innerHTML = html;
+            } catch(e) { modalBody.innerHTML = '查詢失敗'; }
+        }
+
         function toggleSaveWord(w, m) { const idx = savedVocab.findIndex(i => i.word.toLowerCase() === w.toLowerCase()); if(idx === -1) savedVocab.push({word:w, meaning:m, date:new Date().toLocaleDateString()}); else savedVocab.splice(idx, 1); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); const btn = document.getElementById('saveBtn'); if(btn) { btn.innerText = idx===-1?'⭐ 已收藏':'☆ 收藏'; btn.className = `action-btn ${idx===-1?'btn-primary':'btn-outline'}`; } }
         function updateVocabUI() { const list = document.getElementById('vocab-list'); list.innerHTML = ''; if(vocabCount) vocabCount.innerText = savedVocab.length; if(!savedVocab.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無收藏單字</div>'; return; } [...savedVocab].reverse().forEach(i => { const div = document.createElement('div'); div.className = 'list-item'; div.innerHTML = `<div class="delete-btn" onclick="deleteWord('${i.word}')">&times;</div><div class="item-title" onclick="lookupWord('${i.word}')">${i.word}</div><div class="item-sub">${i.meaning}</div>`; list.appendChild(div); }); }
         function deleteWord(w) { savedVocab = savedVocab.filter(i => i.word !== w); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); }
