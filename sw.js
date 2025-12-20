@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-english-v6'; // 升級為 v6
+const CACHE_NAME = 'ai-english-v7'; // 升級為 v7
 const ASSETS = [
     './',
     './index.html',
