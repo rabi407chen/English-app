@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
-    <title>AI 英文全能助手 (V7.5 智慧分割版)</title>
+    <title>AI 英文全能助手 (V7.6 優化版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -32,11 +32,13 @@
         #manual-input-area { display: none; margin-top: 1rem; text-align: left; }
         textarea { width: 100%; height: 200px; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; box-sizing: border-box; }
         
-        /* 閱讀與編輯 */
+        /* 結果顯示 */
         #result-container { text-align: left; font-size: 1.1rem; line-height: 2; color: #374151; display: none; user-select: text; -webkit-user-select: text; }
         .paragraph { margin-bottom: 1.5rem; text-align: justify; text-indent: 2rem; }
         .word { cursor: pointer; border-bottom: 1px dotted transparent; transition: all 0.2s; }
         .word:hover { background-color: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
+        
+        /* 編輯器 */
         #editor-container { display: none; text-align: left; }
         #editor-textarea { width: 100%; height: 400px; padding: 1rem; border: 2px solid var(--primary); border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; outline: none; }
 
@@ -64,6 +66,7 @@
         .btn-primary { background: var(--primary); color: white; }
         .btn-outline { background: white; border: 1px solid #d1d5db; color: var(--text-dark); }
         .btn-success { background: var(--success); color: white; }
+        .btn-danger-outline { background: white; border: 1px solid var(--danger); color: var(--danger); margin-bottom: 1rem; }
         .btn-icon { width: auto; padding: 0.4rem 0.8rem; margin: 0; display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; }
         
         /* 彈窗 & Log */
@@ -72,24 +75,30 @@
         .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
         #console-log { position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; background: #222; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 9999; box-sizing: border-box; border-top: 2px solid #444; opacity: 0.9; }
         
-        /* 🔥 分割調整視窗樣式 */
-        #split-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 400; }
+        /* 🔥 分割調整視窗 (優化版) */
+        #split-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 10000; /* 極高層級 */ }
         .split-content { background: white; padding: 1rem; border-radius: 1rem; width: 95%; max-width: 600px; text-align: center; position: relative; }
-        #split-image-container { position: relative; width: 100%; max-height: 60vh; overflow: hidden; margin-bottom: 1rem; border: 2px solid #ddd; }
-        #split-image { width: 100%; display: block; }
-        #split-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: red; box-shadow: 0 0 5px rgba(0,0,0,0.5); pointer-events: none; transform: translateX(-50%); }
-        .slider-container { display: flex; align-items: center; gap: 10px; padding: 0 1rem; }
-        input[type=range] { width: 100%; -webkit-appearance: none; height: 10px; background: #ddd; border-radius: 5px; outline: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; background: var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #split-image-container { position: relative; width: 100%; max-height: 55vh; overflow: hidden; margin-bottom: 1rem; border: 2px solid #ddd; background: #333; }
+        #split-image { width: 100%; display: block; object-fit: contain; }
+        #split-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: red; box-shadow: 0 0 8px rgba(255,255,255,0.8); pointer-events: none; transform: translateX(-50%); }
+        .slider-container { display: flex; align-items: center; gap: 10px; padding: 0.5rem 1rem; background: #f0f0f0; border-radius: 10px; }
+        
+        /* 🔥 加大滑桿觸控區 */
+        input[type=range] { width: 100%; -webkit-appearance: none; height: 12px; background: #ccc; border-radius: 6px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 35px; height: 35px; background: var(--primary); border: 3px solid white; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.4); margin-top: -2px; }
 
-        /* 測驗區樣式補回 */
+        /* 測驗區 & 除錯區 */
         #quiz-card { display: none; text-align: center; }
         .quiz-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin-bottom: 2rem; }
         .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
         .quiz-btn { padding: 1.5rem; font-size: 1.1rem; background: white; border: 2px solid #e5e7eb; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; color: var(--text-dark); }
         .quiz-btn.correct { background: var(--success); color: white; border-color: var(--success); }
         .quiz-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); }
-        .debug-img { max-width: 45%; border: 1px solid #ddd; margin: 5px; border-radius: 4px; }
+        
+        /* 🔥 可收折除錯區 */
+        #debug-container { display: none; margin-top: 1rem; padding: 1rem; background: #fff1f2; border-radius: 0.5rem; }
+        #debug-content { display: none; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
+        .debug-img { max-width: 45%; border: 1px solid #ddd; border-radius: 4px; }
 
         @media (max-width: 600px) { .drawer { width: 100%; right: -100%; } .quiz-options { grid-template-columns: 1fr; } }
     </style>
@@ -138,9 +147,12 @@
                 <button class="action-btn btn-primary" onclick="processManualText()" style="margin-top:1rem;">🚀 開始閱讀</button>
             </div>
             <div id="status"></div>
-            <div id="debug-area" style="display:none; margin-top:1rem; padding:1rem; background:#fff1f2; border-radius:0.5rem;">
-                <p style="color: var(--danger); font-size:0.9rem; margin:0 0 0.5rem 0;">🔴 切圖檢查</p>
-                <div id="debug-images-container"></div>
+            
+            <div id="debug-container">
+                <button class="action-btn btn-danger-outline" onclick="toggleDebugContent()">🐞 開啟/關閉 除錯圖片</button>
+                <div id="debug-content">
+                    <div id="debug-images-container"></div>
+                </div>
             </div>
         </div>
 
@@ -167,19 +179,19 @@
     <div id="split-modal">
         <div class="split-content">
             <h3 style="margin:0 0 1rem 0;">📐 調整分割線</h3>
-            <p style="font-size:0.9rem; color:gray;">左右拖曳滑桿，將紅線對齊文章中間</p>
+            <p style="font-size:0.9rem; color:gray; margin-bottom:10px;">左右拖曳滑桿，將紅線對齊文章中間</p>
             <div id="split-image-container">
                 <img id="split-image">
                 <div id="split-line"></div>
             </div>
             <div class="slider-container">
-                <span>左</span>
+                <span style="font-weight:bold;">左</span>
                 <input type="range" id="split-slider" min="10" max="90" value="50">
-                <span>右</span>
+                <span style="font-weight:bold;">右</span>
             </div>
-            <div style="margin-top:1.5rem; display:flex; gap:10px;">
-                <button class="action-btn btn-outline" onclick="closeSplitModal()">❌ 取消</button>
-                <button class="action-btn btn-primary" onclick="confirmSplit()">✅ 開始辨識</button>
+            <div style="margin-top:1.5rem; display:flex; gap:10px; justify-content:center;">
+                <button class="action-btn btn-outline" style="width:auto; padding:0.5rem 1.5rem;" onclick="closeSplitModal()">❌ 取消</button>
+                <button class="action-btn btn-primary" style="width:auto; padding:0.5rem 1.5rem;" onclick="confirmSplit()">✅ 開始辨識</button>
             </div>
         </div>
     </div>
@@ -211,7 +223,7 @@
     </div>
 
     <div id="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span><div id="modal-body">載入中...</div></div></div>
-    <div id="console-log"><div>System Log V7.5 (Smart Split) Initialized...</div></div>
+    <div id="console-log"><div>System Log V7.6 (Better UI) Initialized...</div></div>
 
     <script>
         const converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
@@ -232,7 +244,7 @@
         let savedArticles = JSON.parse(localStorage.getItem('myArticles') || '[]'); 
         let currentArticleText = ""; 
         let currentArticleId = null;
-        let tempFile = null; // 暫存圖片檔案
+        let tempFile = null;
 
         let quizQuestions = []; let currentQuestionIndex = 0; let score = 0; let isAnswering = false;
 
@@ -252,17 +264,26 @@
         const splitImage = document.getElementById('split-image');
         const splitSlider = document.getElementById('split-slider');
         const splitLine = document.getElementById('split-line');
+        const debugContainer = document.getElementById('debug-container');
+        const debugContent = document.getElementById('debug-content');
         
         updateVocabUI();
         updateArticleUI();
 
-        // === 分割調整邏輯 (NEW) ===
+        // === 新增：除錯區開關 ===
+        function toggleDebugContent() {
+            if(debugContent.style.display === 'flex') {
+                debugContent.style.display = 'none';
+            } else {
+                debugContent.style.display = 'flex';
+            }
+        }
+
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return; 
-            tempFile = file; // 暫存檔案
+            tempFile = file; 
             
             if (document.getElementById('twoColumnMode').checked) {
-                // 開啟調整視窗
                 const url = URL.createObjectURL(file);
                 splitImage.src = url;
                 splitSlider.value = 50;
@@ -279,12 +300,12 @@
 
         function closeSplitModal() {
             splitModal.style.display = 'none';
-            imageInput.value = ''; // 清空選擇
+            imageInput.value = ''; 
         }
 
         function confirmSplit() {
             splitModal.style.display = 'none';
-            const ratio = splitSlider.value / 100; // 取得比例 (0.x)
+            const ratio = splitSlider.value / 100;
             log(`確認分割比例: ${ratio}`);
             processTwoColumns(tempFile, ratio);
         }
@@ -294,11 +315,11 @@
             updateStatus("⚡ 依照指定比例切割...", "var(--primary)"); 
             try { 
                 const img = await loadImage(file); 
-                // 使用傳入的 splitRatio
                 const leftBlob = await cropImage(img, 0, 0, splitRatio, 1); 
                 const rightBlob = await cropImage(img, splitRatio, 0, 1-splitRatio, 1); 
                 
-                document.getElementById('debug-area').style.display = 'block';
+                // 顯示除錯區容器
+                debugContainer.style.display = 'block';
                 showDebugImage(leftBlob, `左欄 (${Math.round(splitRatio*100)}%)`); 
                 showDebugImage(rightBlob, `右欄 (${Math.round((1-splitRatio)*100)}%)`);
                 
@@ -312,172 +333,28 @@
             } catch (e) { log(e.message, 'error'); }
         }
 
-        // === 編輯存檔 (維持 V7.4) ===
-        function enableEditMode() {
-            document.getElementById('read-mode-header').style.display = 'none';
-            document.getElementById('edit-mode-header').style.display = 'flex';
-            resultContainer.style.display = 'none';
-            editorContainer.style.display = 'block';
-            editorTextarea.value = currentArticleText;
-        }
-        function cancelEditMode() {
-            document.getElementById('read-mode-header').style.display = 'flex';
-            document.getElementById('edit-mode-header').style.display = 'none';
-            resultContainer.style.display = 'block';
-            editorContainer.style.display = 'none';
-        }
-        function confirmEditMode() {
-            const newText = editorTextarea.value;
-            if(!newText.trim()) { alert("內容不能為空"); return; }
-            currentArticleText = newText;
-            displayInteractiveText(currentArticleText, false);
-            document.getElementById('read-mode-header').style.display = 'flex';
-            document.getElementById('edit-mode-header').style.display = 'none';
-            resultContainer.style.display = 'block';
-            editorContainer.style.display = 'none';
-        }
-        function saveCurrentArticle() {
-            if (!currentArticleText) { alert("無內容"); return; }
-            if (currentArticleId) {
-                const idx = savedArticles.findIndex(a => a.id == currentArticleId);
-                if (idx !== -1 && confirm(`覆寫「${savedArticles[idx].title}」？`)) {
-                    savedArticles[idx].content = currentArticleText;
-                    savedArticles[idx].date = new Date().toLocaleDateString();
-                    localStorage.setItem('myArticles', JSON.stringify(savedArticles));
-                    updateArticleUI(); alert("已更新！"); return;
-                }
-            }
-            const title = prompt("輸入標題：", "未命名文章");
-            if (title) {
-                const newId = Date.now();
-                savedArticles.unshift({ id: newId, title: title, content: currentArticleText, date: new Date().toLocaleDateString() });
-                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
-                updateArticleUI(); currentArticleId = newId; alert("已儲存！");
-            }
-        }
+        // === 編輯存檔 ===
+        function enableEditMode() { document.getElementById('read-mode-header').style.display = 'none'; document.getElementById('edit-mode-header').style.display = 'flex'; resultContainer.style.display = 'none'; editorContainer.style.display = 'block'; editorTextarea.value = currentArticleText; }
+        function cancelEditMode() { document.getElementById('read-mode-header').style.display = 'flex'; document.getElementById('edit-mode-header').style.display = 'none'; resultContainer.style.display = 'block'; editorContainer.style.display = 'none'; }
+        function confirmEditMode() { const newText = editorTextarea.value; if(!newText.trim()) { alert("內容不能為空"); return; } currentArticleText = newText; displayInteractiveText(currentArticleText, false); document.getElementById('read-mode-header').style.display = 'flex'; document.getElementById('edit-mode-header').style.display = 'none'; resultContainer.style.display = 'block'; editorContainer.style.display = 'none'; }
+        function saveCurrentArticle() { if (!currentArticleText) { alert("無內容"); return; } if (currentArticleId) { const idx = savedArticles.findIndex(a => a.id == currentArticleId); if (idx !== -1 && confirm(`覆寫「${savedArticles[idx].title}」？`)) { savedArticles[idx].content = currentArticleText; savedArticles[idx].date = new Date().toLocaleDateString(); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); alert("已更新！"); return; } } const title = prompt("輸入標題：", "未命名文章"); if (title) { const newId = Date.now(); savedArticles.unshift({ id: newId, title: title, content: currentArticleText, date: new Date().toLocaleDateString() }); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); currentArticleId = newId; alert("已儲存！"); } }
 
         // === 基礎功能 ===
-        function switchInputMode(mode) {
-            document.getElementById('image-input-area').style.display = mode === 'image' ? 'block' : 'none';
-            document.getElementById('manual-input-area').style.display = mode === 'text' ? 'block' : 'none';
-            document.getElementById('btn-mode-image').className = mode === 'image' ? 'action-btn btn-primary' : 'action-btn btn-outline';
-            document.getElementById('btn-mode-text').className = mode === 'text' ? 'action-btn btn-primary' : 'action-btn btn-outline';
-        }
-        function processManualText() {
-            const text = document.getElementById('manualText').value;
-            if (!text.trim()) { alert("請輸入"); return; }
-            currentArticleId = null; displayInteractiveText(text);
-        }
-        function loadArticle(id) {
-            const article = savedArticles.find(a => a.id == id);
-            if (article) { log(`Load: ${article.title}`); currentArticleId = id; displayInteractiveText(article.content, false); toggleDrawer(); }
-        }
-        function deleteArticle(id, event) {
-            event.stopPropagation(); if(confirm("刪除？")) { savedArticles = savedArticles.filter(a => a.id != id); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); }
-        }
+        function switchInputMode(mode) { document.getElementById('image-input-area').style.display = mode === 'image' ? 'block' : 'none'; document.getElementById('manual-input-area').style.display = mode === 'text' ? 'block' : 'none'; document.getElementById('btn-mode-image').className = mode === 'image' ? 'action-btn btn-primary' : 'action-btn btn-outline'; document.getElementById('btn-mode-text').className = mode === 'text' ? 'action-btn btn-primary' : 'action-btn btn-outline'; }
+        function processManualText() { const text = document.getElementById('manualText').value; if (!text.trim()) { alert("請輸入"); return; } currentArticleId = null; displayInteractiveText(text); }
+        function loadArticle(id) { const article = savedArticles.find(a => a.id == id); if (article) { log(`Load: ${article.title}`); currentArticleId = id; displayInteractiveText(article.content, false); toggleDrawer(); } }
+        function deleteArticle(id, event) { event.stopPropagation(); if(confirm("刪除？")) { savedArticles = savedArticles.filter(a => a.id != id); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); } }
         function clearArticles() { if(confirm("清空文章？")) { savedArticles = []; localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); } }
-        function updateArticleUI() {
-            const list = document.getElementById('article-list'); list.innerHTML = '';
-            if (!savedArticles.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無文章</div>'; return; }
-            savedArticles.forEach(item => {
-                const div = document.createElement('div'); div.className = 'list-item';
-                div.innerHTML = `<div class="delete-btn" onclick="deleteArticle(${item.id}, event)">&times;</div><div class="item-title">${item.title}</div><div class="item-sub">${item.date} · 字數: ${item.content.length}</div>`;
-                div.onclick = () => loadArticle(item.id); list.appendChild(div);
-            });
-        }
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            document.getElementById(`${tab}-content`).classList.add('active');
-        }
-        function resetUI() { 
-            document.getElementById('debug-area').style.display = 'none'; 
-            document.getElementById('debug-images-container').innerHTML = ''; 
-            resultCard.style.display = 'none'; 
-            resultContainer.innerHTML = ''; 
-            updateStatus("準備中...", "var(--text-gray)"); 
-        }
-        async function performCloudOCR(file) { 
-            resetUI(); log(`單欄: ${file.name}`);
-            updateStatus("☁️ 上傳辨識...", "var(--primary)"); 
-            const text = await callOCRSpace(file); 
-            if (text) { displayInteractiveText(text); updateStatus("✅ 完成", "var(--success)"); } 
-            else { updateStatus("❌ 失敗", "var(--danger)"); }
-        }
-        async function callOCRSpace(fileBlob) { 
-            const formData = new FormData(); 
-            formData.append("apikey", API_KEY); formData.append("language", "eng"); formData.append("isOverlayRequired", "false"); formData.append("file", fileBlob, "image.jpg"); formData.append("OCREngine", "2"); formData.append("scale", "true"); 
-            try { 
-                const res = await fetch("https://api.ocr.space/parse/image", { method: "POST", body: formData }); 
-                const data = await res.json(); 
-                if (data.ParsedResults && data.ParsedResults.length > 0) return data.ParsedResults[0].ParsedText; 
-                return ""; 
-            } catch (e) { log(e.message, 'error'); return null; } 
-        }
-        function displayInteractiveText(text, resetId = true) {
-            currentArticleText = text; if(resetId) currentArticleId = null;
-            resultCard.style.display = 'block'; resultContainer.style.display = 'block'; editorContainer.style.display = 'none';
-            document.getElementById('read-mode-header').style.display = 'flex'; document.getElementById('edit-mode-header').style.display = 'none';
-            uploadCard.style.display = 'none'; quizCard.style.display = 'none';
-            let formatted = text.replace(/-\s*[\r\n]+/g, "").replace(/\r\n/g, "\n").replace(/\n\s*\n/g, "{{PARA}}").replace(/\n/g, " ").replace(/{{PARA}}/g, "\n\n");
-            const paragraphs = formatted.replace(/(\d+)/g, " $1 ").split('\n\n'); 
-            resultContainer.innerHTML = '';
-            paragraphs.forEach(p => {
-                if(!p.trim()) return;
-                const div = document.createElement('div'); div.className = 'paragraph';
-                p.split(/(\s+)/).forEach(w => {
-                    const span = document.createElement('span'); span.innerText = w;
-                    const clean = w.replace(/[^a-zA-Z]/g, "");
-                    if(clean) { span.className = 'word'; span.onclick = () => { if(!window.getSelection().toString()) lookupWord(clean); }; }
-                    div.appendChild(span);
-                });
-                resultContainer.appendChild(div);
-            });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        function goHome() { 
-            quizCard.style.display = 'none'; resultCard.style.display = 'none'; uploadCard.style.display = 'block'; drawer.classList.remove('open'); currentArticleText = ""; currentArticleId = null; document.getElementById('manualText').value = ""; 
-        }
-        async function lookupWord(text) { 
-            const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); if(!q) return; 
-            modal.style.display = 'flex'; modalBody.innerHTML = `<div class="loader">🔍 查詢中...</div>`;
-            try {
-                const [resEn, resZh] = await Promise.all([ fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${q}`), fetch(`https://api.mymemory.translated.net/get?q=${q}&langpair=en|zh-TW`) ]);
-                const zhData = await resZh.json(); let zhText = zhData.responseData?.translatedText || "失敗";
-                if(!/[\u4e00-\u9fa5]/.test(zhText) && zhData.matches) zhText = zhData.matches.find(m=>/[\u4e00-\u9fa5]/.test(m.translation))?.translation || zhText;
-                zhText = converter(zhText);
-                const isSaved = savedVocab.some(i => i.word.toLowerCase() === q.toLowerCase());
-                const btnHtml = `<button id="saveBtn" onclick="toggleSaveWord('${q}', '${zhText}')" class="action-btn ${isSaved?'btn-primary':'btn-outline'}" style="width:auto; padding:0.4rem 1rem;">${isSaved?'⭐ 已收藏':'☆ 收藏'}</button>`;
-                let html = `<div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;"><h2 style="margin:0; color:var(--primary);">${q}</h2><button onclick="speakWord('${q}')" style="background:var(--success); color:white; border:none; border-radius:50%; width:32px; height:32px;">🔊</button><div style="flex:1;"></div>${btnHtml}</div>`;
-                html += `<div style="background:#fff7ed; padding:1rem; border-radius:0.5rem; border-left: 4px solid var(--warning); margin-bottom:1.5rem;"><strong style="font-size:1.2rem;">${zhText}</strong></div>`;
-                if(resEn.ok) {
-                    const enData = await resEn.json();
-                    enData[0].meanings.forEach(m => {
-                        html += `<div style="margin-bottom:1rem;"><span style="background:#eff6ff; color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:bold;">${m.partOfSpeech}</span>`;
-                        m.definitions.slice(0,2).forEach((d,i)=> html+=`<div style="margin:5px 0; color:#444;">${i+1}. ${d.definition}</div>`);
-                        html += `</div>`;
-                    });
-                }
-                modalBody.innerHTML = html;
-            } catch(e) { modalBody.innerHTML = '查詢失敗'; }
-        }
-        function toggleSaveWord(w, m) {
-            const idx = savedVocab.findIndex(i => i.word.toLowerCase() === w.toLowerCase());
-            if(idx === -1) savedVocab.push({word:w, meaning:m, date:new Date().toLocaleDateString()}); else savedVocab.splice(idx, 1);
-            localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI();
-            const btn = document.getElementById('saveBtn'); if(btn) { btn.innerText = idx===-1?'⭐ 已收藏':'☆ 收藏'; btn.className = `action-btn ${idx===-1?'btn-primary':'btn-outline'}`; }
-        }
-        function updateVocabUI() {
-            const list = document.getElementById('vocab-list'); list.innerHTML = '';
-            if(vocabCount) vocabCount.innerText = savedVocab.length;
-            if(!savedVocab.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無收藏單字</div>'; return; }
-            [...savedVocab].reverse().forEach(i => {
-                const div = document.createElement('div'); div.className = 'list-item';
-                div.innerHTML = `<div class="delete-btn" onclick="deleteWord('${i.word}')">&times;</div><div class="item-title" onclick="lookupWord('${i.word}')">${i.word}</div><div class="item-sub">${i.meaning}</div>`;
-                list.appendChild(div);
-            });
-        }
+        function updateArticleUI() { const list = document.getElementById('article-list'); list.innerHTML = ''; if (!savedArticles.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無文章</div>'; return; } savedArticles.forEach(item => { const div = document.createElement('div'); div.className = 'list-item'; div.innerHTML = `<div class="delete-btn" onclick="deleteArticle(${item.id}, event)">&times;</div><div class="item-title">${item.title}</div><div class="item-sub">${item.date} · 字數: ${item.content.length}</div>`; div.onclick = () => loadArticle(item.id); list.appendChild(div); }); }
+        function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById(`tab-${tab}`).classList.add('active'); document.getElementById(`${tab}-content`).classList.add('active'); }
+        function resetUI() { document.getElementById('debug-container').style.display = 'none'; document.getElementById('debug-images-container').innerHTML = ''; resultCard.style.display = 'none'; resultContainer.innerHTML = ''; updateStatus("準備中...", "var(--text-gray)"); }
+        async function performCloudOCR(file) { resetUI(); log(`單欄: ${file.name}`); updateStatus("☁️ 上傳辨識...", "var(--primary)"); const text = await callOCRSpace(file); if (text) { displayInteractiveText(text); updateStatus("✅ 完成", "var(--success)"); } else { updateStatus("❌ 失敗", "var(--danger)"); } }
+        async function callOCRSpace(fileBlob) { const formData = new FormData(); formData.append("apikey", API_KEY); formData.append("language", "eng"); formData.append("isOverlayRequired", "false"); formData.append("file", fileBlob, "image.jpg"); formData.append("OCREngine", "2"); formData.append("scale", "true"); try { const res = await fetch("https://api.ocr.space/parse/image", { method: "POST", body: formData }); const data = await res.json(); if (data.ParsedResults && data.ParsedResults.length > 0) return data.ParsedResults[0].ParsedText; return ""; } catch (e) { log(e.message, 'error'); return null; } }
+        function displayInteractiveText(text, resetId = true) { currentArticleText = text; if(resetId) currentArticleId = null; resultCard.style.display = 'block'; resultContainer.style.display = 'block'; editorContainer.style.display = 'none'; document.getElementById('read-mode-header').style.display = 'flex'; document.getElementById('edit-mode-header').style.display = 'none'; uploadCard.style.display = 'none'; quizCard.style.display = 'none'; let formatted = text.replace(/-\s*[\r\n]+/g, "").replace(/\r\n/g, "\n").replace(/\n\s*\n/g, "{{PARA}}").replace(/\n/g, " ").replace(/{{PARA}}/g, "\n\n"); const paragraphs = formatted.replace(/(\d+)/g, " $1 ").split('\n\n'); resultContainer.innerHTML = ''; paragraphs.forEach(p => { if(!p.trim()) return; const div = document.createElement('div'); div.className = 'paragraph'; p.split(/(\s+)/).forEach(w => { const span = document.createElement('span'); span.innerText = w; const clean = w.replace(/[^a-zA-Z]/g, ""); if(clean) { span.className = 'word'; span.onclick = () => { if(!window.getSelection().toString()) lookupWord(clean); }; } div.appendChild(span); }); resultContainer.appendChild(div); }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        function goHome() { quizCard.style.display = 'none'; resultCard.style.display = 'none'; uploadCard.style.display = 'block'; drawer.classList.remove('open'); currentArticleText = ""; currentArticleId = null; document.getElementById('manualText').value = ""; }
+        async function lookupWord(text) { const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); if(!q) return; modal.style.display = 'flex'; modalBody.innerHTML = `<div class="loader">🔍 查詢中...</div>`; try { const [resEn, resZh] = await Promise.all([ fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${q}`), fetch(`https://api.mymemory.translated.net/get?q=${q}&langpair=en|zh-TW`) ]); const zhData = await resZh.json(); let zhText = zhData.responseData?.translatedText || "失敗"; if(!/[\u4e00-\u9fa5]/.test(zhText) && zhData.matches) zhText = zhData.matches.find(m=>/[\u4e00-\u9fa5]/.test(m.translation))?.translation || zhText; zhText = converter(zhText); const isSaved = savedVocab.some(i => i.word.toLowerCase() === q.toLowerCase()); const btnHtml = `<button id="saveBtn" onclick="toggleSaveWord('${q}', '${zhText}')" class="action-btn ${isSaved?'btn-primary':'btn-outline'}" style="width:auto; padding:0.4rem 1rem;">${isSaved?'⭐ 已收藏':'☆ 收藏'}</button>`; let html = `<div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;"><h2 style="margin:0; color:var(--primary);">${q}</h2><button onclick="speakWord('${q}')" style="background:var(--success); color:white; border:none; border-radius:50%; width:32px; height:32px;">🔊</button><div style="flex:1;"></div>${btnHtml}</div>`; html += `<div style="background:#fff7ed; padding:1rem; border-radius:0.5rem; border-left: 4px solid var(--warning); margin-bottom:1.5rem;"><strong style="font-size:1.2rem;">${zhText}</strong></div>`; if(resEn.ok) { const enData = await resEn.json(); enData[0].meanings.forEach(m => { html += `<div style="margin-bottom:1rem;"><span style="background:#eff6ff; color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:bold;">${m.partOfSpeech}</span>`; m.definitions.slice(0,2).forEach((d,i)=> html+=`<div style="margin:5px 0; color:#444;">${i+1}. ${d.definition}</div>`); html += `</div>`; }); } modalBody.innerHTML = html; } catch(e) { modalBody.innerHTML = '查詢失敗'; } }
+        function toggleSaveWord(w, m) { const idx = savedVocab.findIndex(i => i.word.toLowerCase() === w.toLowerCase()); if(idx === -1) savedVocab.push({word:w, meaning:m, date:new Date().toLocaleDateString()}); else savedVocab.splice(idx, 1); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); const btn = document.getElementById('saveBtn'); if(btn) { btn.innerText = idx===-1?'⭐ 已收藏':'☆ 收藏'; btn.className = `action-btn ${idx===-1?'btn-primary':'btn-outline'}`; } }
+        function updateVocabUI() { const list = document.getElementById('vocab-list'); list.innerHTML = ''; if(vocabCount) vocabCount.innerText = savedVocab.length; if(!savedVocab.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無收藏單字</div>'; return; } [...savedVocab].reverse().forEach(i => { const div = document.createElement('div'); div.className = 'list-item'; div.innerHTML = `<div class="delete-btn" onclick="deleteWord('${i.word}')">&times;</div><div class="item-title" onclick="lookupWord('${i.word}')">${i.word}</div><div class="item-sub">${i.meaning}</div>`; list.appendChild(div); }); }
         function deleteWord(w) { savedVocab = savedVocab.filter(i => i.word !== w); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); }
         function clearVocab() { if(confirm('清空？')) { savedVocab=[]; localStorage.setItem('myVocab', '[]'); updateVocabUI(); } }
         function exportToCSV() { if (!savedVocab.length) { alert('無資料'); return; } let csv = "\uFEFF單字,中文,日期\n"; savedVocab.forEach(i => csv += `${i.word},${i.meaning.replace(/,/g, "，")},${i.date}\n`); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `Vocab_${new Date().toLocaleDateString()}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
