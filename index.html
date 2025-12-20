@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
-    <title>AI 英文全能助手 (V7.4 完美筆記版)</title>
+    <title>AI 英文全能助手 (V7.5 智慧分割版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -32,13 +32,11 @@
         #manual-input-area { display: none; margin-top: 1rem; text-align: left; }
         textarea { width: 100%; height: 200px; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; box-sizing: border-box; }
         
-        /* 結果顯示 */
+        /* 閱讀與編輯 */
         #result-container { text-align: left; font-size: 1.1rem; line-height: 2; color: #374151; display: none; user-select: text; -webkit-user-select: text; }
         .paragraph { margin-bottom: 1.5rem; text-align: justify; text-indent: 2rem; }
         .word { cursor: pointer; border-bottom: 1px dotted transparent; transition: all 0.2s; }
         .word:hover { background-color: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
-        
-        /* 編輯器 */
         #editor-container { display: none; text-align: left; }
         #editor-textarea { width: 100%; height: 400px; padding: 1rem; border: 2px solid var(--primary); border-radius: 0.5rem; font-family: inherit; font-size: 1.1rem; line-height: 1.8; resize: vertical; outline: none; }
 
@@ -46,28 +44,13 @@
         .drawer { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background: white; box-shadow: -4px 0 15px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 200; display: flex; flex-direction: column; }
         .drawer.open { right: 0; }
         .drawer-header { padding: 0; border-bottom: 1px solid #e5e7eb; background: var(--primary); color: white; position: relative; }
-        
-        /* 🔥 修復關鍵：確保關閉按鈕層級最高 */
-        .drawer-close {
-            position: absolute;
-            top: 5px;
-            right: 15px;
-            cursor: pointer;
-            font-size: 2rem;
-            color: white;
-            z-index: 999; /* 確保在最上層 */
-            line-height: 1;
-            padding: 5px;
-        }
-
+        .drawer-close { position: absolute; top: 5px; right: 15px; cursor: pointer; font-size: 2rem; color: white; z-index: 999; line-height: 1; padding: 5px; }
         .tabs { display: flex; width: 100%; }
         .tab { flex: 1; padding: 1rem; text-align: center; cursor: pointer; font-weight: bold; opacity: 0.7; transition: 0.2s; background: rgba(0,0,0,0.1); }
         .tab.active { background: white; color: var(--primary); opacity: 1; border-top: 3px solid white; }
         .drawer-content { flex: 1; overflow-y: auto; padding: 1rem; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
-        /* 列表樣式 */
         .list-item { background: var(--secondary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; position: relative; cursor: pointer; }
         .list-item:hover { background: #e5e7eb; }
         .item-title { font-weight: bold; color: var(--primary); font-size: 1.1em; }
@@ -83,21 +66,31 @@
         .btn-success { background: var(--success); color: white; }
         .btn-icon { width: auto; padding: 0.4rem 0.8rem; margin: 0; display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; }
         
-        /* 測驗區 */
+        /* 彈窗 & Log */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 300; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; position: relative; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
+        #console-log { position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; background: #222; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 9999; box-sizing: border-box; border-top: 2px solid #444; opacity: 0.9; }
+        
+        /* 🔥 分割調整視窗樣式 */
+        #split-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 400; }
+        .split-content { background: white; padding: 1rem; border-radius: 1rem; width: 95%; max-width: 600px; text-align: center; position: relative; }
+        #split-image-container { position: relative; width: 100%; max-height: 60vh; overflow: hidden; margin-bottom: 1rem; border: 2px solid #ddd; }
+        #split-image { width: 100%; display: block; }
+        #split-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: red; box-shadow: 0 0 5px rgba(0,0,0,0.5); pointer-events: none; transform: translateX(-50%); }
+        .slider-container { display: flex; align-items: center; gap: 10px; padding: 0 1rem; }
+        input[type=range] { width: 100%; -webkit-appearance: none; height: 10px; background: #ddd; border-radius: 5px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; background: var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        /* 測驗區樣式補回 */
         #quiz-card { display: none; text-align: center; }
         .quiz-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin-bottom: 2rem; }
         .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
         .quiz-btn { padding: 1.5rem; font-size: 1.1rem; background: white; border: 2px solid #e5e7eb; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; color: var(--text-dark); }
         .quiz-btn.correct { background: var(--success); color: white; border-color: var(--success); }
         .quiz-btn.wrong { background: var(--danger); color: white; border-color: var(--danger); }
-        
-        /* 彈窗 & Log */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 300; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; position: relative; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
         .debug-img { max-width: 45%; border: 1px solid #ddd; margin: 5px; border-radius: 4px; }
-        #console-log { position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; background: #222; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 9999; box-sizing: border-box; border-top: 2px solid #444; opacity: 0.9; }
-        
+
         @media (max-width: 600px) { .drawer { width: 100%; right: -100%; } .quiz-options { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -159,7 +152,6 @@
                     <button class="action-btn btn-success btn-icon" onclick="saveCurrentArticle()">💾 存檔</button>
                 </div>
             </div>
-
             <div id="edit-mode-header" style="display:none; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid #eee; padding-bottom:1rem;">
                 <h3 style="margin:0; color:var(--warning);">✏️ 編輯模式</h3>
                 <div style="display:flex; gap:10px;">
@@ -167,10 +159,27 @@
                     <button class="action-btn btn-primary btn-icon" onclick="confirmEditMode()">✅ 完成</button>
                 </div>
             </div>
-
             <div id="result-container"></div>
-            <div id="editor-container">
-                <textarea id="editor-textarea"></textarea>
+            <div id="editor-container"><textarea id="editor-textarea"></textarea></div>
+        </div>
+    </div>
+
+    <div id="split-modal">
+        <div class="split-content">
+            <h3 style="margin:0 0 1rem 0;">📐 調整分割線</h3>
+            <p style="font-size:0.9rem; color:gray;">左右拖曳滑桿，將紅線對齊文章中間</p>
+            <div id="split-image-container">
+                <img id="split-image">
+                <div id="split-line"></div>
+            </div>
+            <div class="slider-container">
+                <span>左</span>
+                <input type="range" id="split-slider" min="10" max="90" value="50">
+                <span>右</span>
+            </div>
+            <div style="margin-top:1.5rem; display:flex; gap:10px;">
+                <button class="action-btn btn-outline" onclick="closeSplitModal()">❌ 取消</button>
+                <button class="action-btn btn-primary" onclick="confirmSplit()">✅ 開始辨識</button>
             </div>
         </div>
     </div>
@@ -202,12 +211,10 @@
     </div>
 
     <div id="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span><div id="modal-body">載入中...</div></div></div>
-
-    <div id="console-log"><div>System Log V7.4 (Smart Save) Initialized...</div></div>
+    <div id="console-log"><div>System Log V7.5 (Smart Split) Initialized...</div></div>
 
     <script>
         const converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
-
         function log(msg, type='info') {
             const logBox = document.getElementById('console-log');
             const div = document.createElement('div');
@@ -224,7 +231,8 @@
         let savedVocab = JSON.parse(localStorage.getItem('myVocab') || '[]'); 
         let savedArticles = JSON.parse(localStorage.getItem('myArticles') || '[]'); 
         let currentArticleText = ""; 
-        let currentArticleId = null; // 🔥 新增：追蹤目前文章 ID
+        let currentArticleId = null;
+        let tempFile = null; // 暫存圖片檔案
 
         let quizQuestions = []; let currentQuestionIndex = 0; let score = 0; let isAnswering = false;
 
@@ -240,145 +248,60 @@
         const modalBody = document.getElementById('modal-body');
         const drawer = document.getElementById('drawer');
         const vocabCount = document.getElementById('vocab-count');
+        const splitModal = document.getElementById('split-modal');
+        const splitImage = document.getElementById('split-image');
+        const splitSlider = document.getElementById('split-slider');
+        const splitLine = document.getElementById('split-line');
         
         updateVocabUI();
         updateArticleUI();
 
-        // === 編輯與存檔邏輯 (Updated) ===
-        function enableEditMode() {
-            document.getElementById('read-mode-header').style.display = 'none';
-            document.getElementById('edit-mode-header').style.display = 'flex';
-            resultContainer.style.display = 'none';
-            editorContainer.style.display = 'block';
-            editorTextarea.value = currentArticleText;
-        }
-
-        function cancelEditMode() {
-            document.getElementById('read-mode-header').style.display = 'flex';
-            document.getElementById('edit-mode-header').style.display = 'none';
-            resultContainer.style.display = 'block';
-            editorContainer.style.display = 'none';
-        }
-
-        function confirmEditMode() {
-            const newText = editorTextarea.value;
-            if(!newText.trim()) { alert("文章內容不能為空！"); return; }
-            currentArticleText = newText;
-            displayInteractiveText(currentArticleText, false); // false = 不要重置 ID
-            document.getElementById('read-mode-header').style.display = 'flex';
-            document.getElementById('edit-mode-header').style.display = 'none';
-            resultContainer.style.display = 'block';
-            editorContainer.style.display = 'none';
-        }
-
-        function saveCurrentArticle() {
-            if (!currentArticleText) { alert("沒有內容可以儲存"); return; }
-            
-            // 🔥 智慧判斷：是更新舊文還是存新文？
-            if (currentArticleId) {
-                const existingIndex = savedArticles.findIndex(a => a.id == currentArticleId);
-                if (existingIndex !== -1) {
-                    const originalTitle = savedArticles[existingIndex].title;
-                    if(confirm(`要覆寫原本的文章「${originalTitle}」嗎？\n(按「取消」則另存為新文章)`)) {
-                        // 更新舊文
-                        savedArticles[existingIndex].content = currentArticleText;
-                        savedArticles[existingIndex].date = new Date().toLocaleDateString();
-                        localStorage.setItem('myArticles', JSON.stringify(savedArticles));
-                        updateArticleUI();
-                        alert("文章更新成功！");
-                        return;
-                    }
-                }
-            }
-
-            // 另存新檔
-            const title = prompt("請為這篇文章輸入標題：", "未命名文章");
-            if (title) {
-                const newId = Date.now();
-                const newArticle = { id: newId, title: title, content: currentArticleText, date: new Date().toLocaleDateString() };
-                savedArticles.unshift(newArticle);
-                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
-                updateArticleUI();
-                currentArticleId = newId; // 更新當前 ID
-                alert("文章已儲存！");
-            }
-        }
-
-        function loadArticle(id) {
-            const article = savedArticles.find(a => a.id == id);
-            if (article) { 
-                log(`載入文章: ${article.title}`); 
-                currentArticleId = id; // 🔥 紀錄目前 ID
-                displayInteractiveText(article.content, false); 
-                toggleDrawer(); 
-            }
-        }
-
-        // === 其他核心功能 ===
-        function switchInputMode(mode) {
-            document.getElementById('image-input-area').style.display = mode === 'image' ? 'block' : 'none';
-            document.getElementById('manual-input-area').style.display = mode === 'text' ? 'block' : 'none';
-            document.getElementById('btn-mode-image').className = mode === 'image' ? 'action-btn btn-primary' : 'action-btn btn-outline';
-            document.getElementById('btn-mode-text').className = mode === 'text' ? 'action-btn btn-primary' : 'action-btn btn-outline';
-        }
-
-        function processManualText() {
-            const text = document.getElementById('manualText').value;
-            if (!text.trim()) { alert("請輸入文字！"); return; }
-            currentArticleId = null; // 新文章，重置 ID
-            displayInteractiveText(text);
-        }
-
-        function deleteArticle(id, event) {
-            event.stopPropagation();
-            if(confirm("確定刪除這篇文章？")) { savedArticles = savedArticles.filter(a => a.id != id); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); }
-        }
-
-        function clearArticles() {
-            if(confirm("確定清空所有文章？")) { savedArticles = []; localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); }
-        }
-
-        function updateArticleUI() {
-            const list = document.getElementById('article-list'); list.innerHTML = '';
-            if (savedArticles.length === 0) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">目前沒有儲存的文章</div>'; return; }
-            savedArticles.forEach(item => {
-                const div = document.createElement('div'); div.className = 'list-item';
-                div.innerHTML = `<div class="delete-btn" onclick="deleteArticle(${item.id}, event)">&times;</div><div class="item-title">${item.title}</div><div class="item-sub">${item.date} · 字數: ${item.content.length}</div>`;
-                div.onclick = () => loadArticle(item.id);
-                list.appendChild(div);
-            });
-        }
-
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            document.getElementById(`${tab}-content`).classList.add('active');
-        }
-
+        // === 分割調整邏輯 (NEW) ===
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return; 
-            resetUI(); log(`圖片: ${file.name}`);
-            currentArticleId = null; // 新圖片，重置 ID
-            if (document.getElementById('twoColumnMode').checked) processTwoColumns(file); else performCloudOCR(file);
+            tempFile = file; // 暫存檔案
+            
+            if (document.getElementById('twoColumnMode').checked) {
+                // 開啟調整視窗
+                const url = URL.createObjectURL(file);
+                splitImage.src = url;
+                splitSlider.value = 50;
+                splitLine.style.left = '50%';
+                splitModal.style.display = 'flex';
+            } else {
+                performCloudOCR(file);
+            }
         });
 
-        function resetUI() { 
-            document.getElementById('debug-area').style.display = 'none'; 
-            document.getElementById('debug-images-container').innerHTML = ''; 
-            resultCard.style.display = 'none'; 
-            resultContainer.innerHTML = ''; 
-            updateStatus("準備中...", "var(--text-gray)"); 
+        splitSlider.addEventListener('input', function() {
+            splitLine.style.left = this.value + '%';
+        });
+
+        function closeSplitModal() {
+            splitModal.style.display = 'none';
+            imageInput.value = ''; // 清空選擇
         }
 
-        async function processTwoColumns(file) { 
-            updateStatus("⚡ 處理版面...", "var(--primary)"); 
+        function confirmSplit() {
+            splitModal.style.display = 'none';
+            const ratio = splitSlider.value / 100; // 取得比例 (0.x)
+            log(`確認分割比例: ${ratio}`);
+            processTwoColumns(tempFile, ratio);
+        }
+
+        async function processTwoColumns(file, splitRatio = 0.5) { 
+            resetUI(); log(`圖片: ${file.name}, 分割: ${splitRatio}`);
+            updateStatus("⚡ 依照指定比例切割...", "var(--primary)"); 
             try { 
                 const img = await loadImage(file); 
-                const leftBlob = await cropImage(img, 0, 0, 0.5, 1); 
-                const rightBlob = await cropImage(img, 0.5, 0, 0.5, 1); 
+                // 使用傳入的 splitRatio
+                const leftBlob = await cropImage(img, 0, 0, splitRatio, 1); 
+                const rightBlob = await cropImage(img, splitRatio, 0, 1-splitRatio, 1); 
+                
                 document.getElementById('debug-area').style.display = 'block';
-                showDebugImage(leftBlob, "左欄"); showDebugImage(rightBlob, "右欄");
+                showDebugImage(leftBlob, `左欄 (${Math.round(splitRatio*100)}%)`); 
+                showDebugImage(rightBlob, `右欄 (${Math.round((1-splitRatio)*100)}%)`);
+                
                 updateStatus("🔍 辨識左欄...", "var(--warning)"); 
                 const leftText = await callOCRSpace(leftBlob); 
                 updateStatus("🔍 辨識右欄...", "var(--warning)"); 
@@ -389,13 +312,99 @@
             } catch (e) { log(e.message, 'error'); }
         }
 
+        // === 編輯存檔 (維持 V7.4) ===
+        function enableEditMode() {
+            document.getElementById('read-mode-header').style.display = 'none';
+            document.getElementById('edit-mode-header').style.display = 'flex';
+            resultContainer.style.display = 'none';
+            editorContainer.style.display = 'block';
+            editorTextarea.value = currentArticleText;
+        }
+        function cancelEditMode() {
+            document.getElementById('read-mode-header').style.display = 'flex';
+            document.getElementById('edit-mode-header').style.display = 'none';
+            resultContainer.style.display = 'block';
+            editorContainer.style.display = 'none';
+        }
+        function confirmEditMode() {
+            const newText = editorTextarea.value;
+            if(!newText.trim()) { alert("內容不能為空"); return; }
+            currentArticleText = newText;
+            displayInteractiveText(currentArticleText, false);
+            document.getElementById('read-mode-header').style.display = 'flex';
+            document.getElementById('edit-mode-header').style.display = 'none';
+            resultContainer.style.display = 'block';
+            editorContainer.style.display = 'none';
+        }
+        function saveCurrentArticle() {
+            if (!currentArticleText) { alert("無內容"); return; }
+            if (currentArticleId) {
+                const idx = savedArticles.findIndex(a => a.id == currentArticleId);
+                if (idx !== -1 && confirm(`覆寫「${savedArticles[idx].title}」？`)) {
+                    savedArticles[idx].content = currentArticleText;
+                    savedArticles[idx].date = new Date().toLocaleDateString();
+                    localStorage.setItem('myArticles', JSON.stringify(savedArticles));
+                    updateArticleUI(); alert("已更新！"); return;
+                }
+            }
+            const title = prompt("輸入標題：", "未命名文章");
+            if (title) {
+                const newId = Date.now();
+                savedArticles.unshift({ id: newId, title: title, content: currentArticleText, date: new Date().toLocaleDateString() });
+                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
+                updateArticleUI(); currentArticleId = newId; alert("已儲存！");
+            }
+        }
+
+        // === 基礎功能 ===
+        function switchInputMode(mode) {
+            document.getElementById('image-input-area').style.display = mode === 'image' ? 'block' : 'none';
+            document.getElementById('manual-input-area').style.display = mode === 'text' ? 'block' : 'none';
+            document.getElementById('btn-mode-image').className = mode === 'image' ? 'action-btn btn-primary' : 'action-btn btn-outline';
+            document.getElementById('btn-mode-text').className = mode === 'text' ? 'action-btn btn-primary' : 'action-btn btn-outline';
+        }
+        function processManualText() {
+            const text = document.getElementById('manualText').value;
+            if (!text.trim()) { alert("請輸入"); return; }
+            currentArticleId = null; displayInteractiveText(text);
+        }
+        function loadArticle(id) {
+            const article = savedArticles.find(a => a.id == id);
+            if (article) { log(`Load: ${article.title}`); currentArticleId = id; displayInteractiveText(article.content, false); toggleDrawer(); }
+        }
+        function deleteArticle(id, event) {
+            event.stopPropagation(); if(confirm("刪除？")) { savedArticles = savedArticles.filter(a => a.id != id); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); }
+        }
+        function clearArticles() { if(confirm("清空文章？")) { savedArticles = []; localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); } }
+        function updateArticleUI() {
+            const list = document.getElementById('article-list'); list.innerHTML = '';
+            if (!savedArticles.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無文章</div>'; return; }
+            savedArticles.forEach(item => {
+                const div = document.createElement('div'); div.className = 'list-item';
+                div.innerHTML = `<div class="delete-btn" onclick="deleteArticle(${item.id}, event)">&times;</div><div class="item-title">${item.title}</div><div class="item-sub">${item.date} · 字數: ${item.content.length}</div>`;
+                div.onclick = () => loadArticle(item.id); list.appendChild(div);
+            });
+        }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`${tab}-content`).classList.add('active');
+        }
+        function resetUI() { 
+            document.getElementById('debug-area').style.display = 'none'; 
+            document.getElementById('debug-images-container').innerHTML = ''; 
+            resultCard.style.display = 'none'; 
+            resultContainer.innerHTML = ''; 
+            updateStatus("準備中...", "var(--text-gray)"); 
+        }
         async function performCloudOCR(file) { 
+            resetUI(); log(`單欄: ${file.name}`);
             updateStatus("☁️ 上傳辨識...", "var(--primary)"); 
             const text = await callOCRSpace(file); 
             if (text) { displayInteractiveText(text); updateStatus("✅ 完成", "var(--success)"); } 
             else { updateStatus("❌ 失敗", "var(--danger)"); }
         }
-
         async function callOCRSpace(fileBlob) { 
             const formData = new FormData(); 
             formData.append("apikey", API_KEY); formData.append("language", "eng"); formData.append("isOverlayRequired", "false"); formData.append("file", fileBlob, "image.jpg"); formData.append("OCREngine", "2"); formData.append("scale", "true"); 
@@ -406,22 +415,13 @@
                 return ""; 
             } catch (e) { log(e.message, 'error'); return null; } 
         }
-
         function displayInteractiveText(text, resetId = true) {
-            currentArticleText = text; 
-            if(resetId) currentArticleId = null; // 預設重置 ID，除非 loadArticle 說不要
-
-            resultCard.style.display = 'block'; 
-            resultContainer.style.display = 'block'; 
-            editorContainer.style.display = 'none';
-            document.getElementById('read-mode-header').style.display = 'flex';
-            document.getElementById('edit-mode-header').style.display = 'none';
-            uploadCard.style.display = 'none';
-            quizCard.style.display = 'none';
-
+            currentArticleText = text; if(resetId) currentArticleId = null;
+            resultCard.style.display = 'block'; resultContainer.style.display = 'block'; editorContainer.style.display = 'none';
+            document.getElementById('read-mode-header').style.display = 'flex'; document.getElementById('edit-mode-header').style.display = 'none';
+            uploadCard.style.display = 'none'; quizCard.style.display = 'none';
             let formatted = text.replace(/-\s*[\r\n]+/g, "").replace(/\r\n/g, "\n").replace(/\n\s*\n/g, "{{PARA}}").replace(/\n/g, " ").replace(/{{PARA}}/g, "\n\n");
             const paragraphs = formatted.replace(/(\d+)/g, " $1 ").split('\n\n'); 
-            
             resultContainer.innerHTML = '';
             paragraphs.forEach(p => {
                 if(!p.trim()) return;
@@ -436,17 +436,9 @@
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         function goHome() { 
-            quizCard.style.display = 'none'; 
-            resultCard.style.display = 'none';
-            uploadCard.style.display = 'block'; 
-            drawer.classList.remove('open'); 
-            currentArticleText = "";
-            currentArticleId = null;
-            document.getElementById('manualText').value = ""; 
+            quizCard.style.display = 'none'; resultCard.style.display = 'none'; uploadCard.style.display = 'block'; drawer.classList.remove('open'); currentArticleText = ""; currentArticleId = null; document.getElementById('manualText').value = ""; 
         }
-
         async function lookupWord(text) { 
             const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); if(!q) return; 
             modal.style.display = 'flex'; modalBody.innerHTML = `<div class="loader">🔍 查詢中...</div>`;
@@ -454,15 +446,11 @@
                 const [resEn, resZh] = await Promise.all([ fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${q}`), fetch(`https://api.mymemory.translated.net/get?q=${q}&langpair=en|zh-TW`) ]);
                 const zhData = await resZh.json(); let zhText = zhData.responseData?.translatedText || "失敗";
                 if(!/[\u4e00-\u9fa5]/.test(zhText) && zhData.matches) zhText = zhData.matches.find(m=>/[\u4e00-\u9fa5]/.test(m.translation))?.translation || zhText;
-                
                 zhText = converter(zhText);
-
                 const isSaved = savedVocab.some(i => i.word.toLowerCase() === q.toLowerCase());
                 const btnHtml = `<button id="saveBtn" onclick="toggleSaveWord('${q}', '${zhText}')" class="action-btn ${isSaved?'btn-primary':'btn-outline'}" style="width:auto; padding:0.4rem 1rem;">${isSaved?'⭐ 已收藏':'☆ 收藏'}</button>`;
-                
                 let html = `<div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;"><h2 style="margin:0; color:var(--primary);">${q}</h2><button onclick="speakWord('${q}')" style="background:var(--success); color:white; border:none; border-radius:50%; width:32px; height:32px;">🔊</button><div style="flex:1;"></div>${btnHtml}</div>`;
                 html += `<div style="background:#fff7ed; padding:1rem; border-radius:0.5rem; border-left: 4px solid var(--warning); margin-bottom:1.5rem;"><strong style="font-size:1.2rem;">${zhText}</strong></div>`;
-                
                 if(resEn.ok) {
                     const enData = await resEn.json();
                     enData[0].meanings.forEach(m => {
@@ -474,20 +462,15 @@
                 modalBody.innerHTML = html;
             } catch(e) { modalBody.innerHTML = '查詢失敗'; }
         }
-
         function toggleSaveWord(w, m) {
             const idx = savedVocab.findIndex(i => i.word.toLowerCase() === w.toLowerCase());
-            if(idx === -1) savedVocab.push({word:w, meaning:m, date:new Date().toLocaleDateString()});
-            else savedVocab.splice(idx, 1);
+            if(idx === -1) savedVocab.push({word:w, meaning:m, date:new Date().toLocaleDateString()}); else savedVocab.splice(idx, 1);
             localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI();
-            const btn = document.getElementById('saveBtn');
-            if(btn) { btn.innerText = idx===-1?'⭐ 已收藏':'☆ 收藏'; btn.className = `action-btn ${idx===-1?'btn-primary':'btn-outline'}`; }
+            const btn = document.getElementById('saveBtn'); if(btn) { btn.innerText = idx===-1?'⭐ 已收藏':'☆ 收藏'; btn.className = `action-btn ${idx===-1?'btn-primary':'btn-outline'}`; }
         }
-        
         function updateVocabUI() {
             const list = document.getElementById('vocab-list'); list.innerHTML = '';
             if(vocabCount) vocabCount.innerText = savedVocab.length;
-            
             if(!savedVocab.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無收藏單字</div>'; return; }
             [...savedVocab].reverse().forEach(i => {
                 const div = document.createElement('div'); div.className = 'list-item';
@@ -497,48 +480,11 @@
         }
         function deleteWord(w) { savedVocab = savedVocab.filter(i => i.word !== w); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); }
         function clearVocab() { if(confirm('清空？')) { savedVocab=[]; localStorage.setItem('myVocab', '[]'); updateVocabUI(); } }
-        
-        function exportToCSV() {
-            if (savedVocab.length === 0) { alert('單字本是空的，無法匯出'); return; }
-            let csvContent = "\uFEFF單字,中文解釋,加入日期\n";
-            savedVocab.forEach(item => {
-                const cleanMeaning = item.meaning.replace(/,/g, "，"); 
-                csvContent += `${item.word},${cleanMeaning},${item.date}\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `英文單字本_${new Date().toLocaleDateString()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // === 測驗 ===
-        function startQuiz() { 
-            if(savedVocab.length < 4) { alert("單字不足 4 個"); return; }
-            toggleDrawer(); quizCard.style.display = 'block'; uploadCard.style.display = 'none'; resultCard.style.display = 'none';
-            document.getElementById('quiz-game-area').style.display='block'; document.getElementById('quiz-result-area').style.display='none';
-            quizQuestions = [...savedVocab].sort(()=>0.5-Math.random()).slice(0,10); currentQuestionIndex=0; score=0;
-            document.getElementById('total-questions').innerText = quizQuestions.length; renderQuestion();
-        }
-        function renderQuestion() {
-            isAnswering = false; document.getElementById('current-score').innerText = score;
-            const q = quizQuestions[currentQuestionIndex]; document.getElementById('quiz-word').innerText = q.word;
-            const opts = [q.meaning, ...savedVocab.filter(i=>i.word!==q.word).sort(()=>0.5-Math.random()).slice(0,3).map(i=>i.meaning)].sort(()=>0.5-Math.random());
-            const box = document.getElementById('quiz-options'); box.innerHTML = '';
-            opts.forEach(o => { const b=document.createElement('button'); b.className='quiz-btn'; b.innerText=o; b.onclick=()=>checkAns(b, o===q.meaning); box.appendChild(b); });
-            speakWord(q.word);
-        }
-        function checkAns(btn, ok) {
-            if(isAnswering) return; isAnswering = true;
-            if(ok) { btn.classList.add('correct'); score++; } else { btn.classList.add('wrong'); document.querySelectorAll('.quiz-btn').forEach(b=>{if(b.innerText===quizQuestions[currentQuestionIndex].meaning)b.classList.add('correct')}); }
-            setTimeout(()=>{ if(++currentQuestionIndex < quizQuestions.length) renderQuestion(); else showRes(); }, 1500);
-        }
+        function exportToCSV() { if (!savedVocab.length) { alert('無資料'); return; } let csv = "\uFEFF單字,中文,日期\n"; savedVocab.forEach(i => csv += `${i.word},${i.meaning.replace(/,/g, "，")},${i.date}\n`); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `Vocab_${new Date().toLocaleDateString()}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+        function startQuiz() { if(savedVocab.length < 4) { alert("單字不足 4 個"); return; } toggleDrawer(); quizCard.style.display = 'block'; uploadCard.style.display = 'none'; resultCard.style.display = 'none'; document.getElementById('quiz-game-area').style.display='block'; document.getElementById('quiz-result-area').style.display='none'; quizQuestions = [...savedVocab].sort(()=>0.5-Math.random()).slice(0,10); currentQuestionIndex=0; score=0; document.getElementById('total-questions').innerText = quizQuestions.length; renderQuestion(); }
+        function renderQuestion() { isAnswering = false; document.getElementById('current-score').innerText = score; const q = quizQuestions[currentQuestionIndex]; document.getElementById('quiz-word').innerText = q.word; const opts = [q.meaning, ...savedVocab.filter(i=>i.word!==q.word).sort(()=>0.5-Math.random()).slice(0,3).map(i=>i.meaning)].sort(()=>0.5-Math.random()); const box = document.getElementById('quiz-options'); box.innerHTML = ''; opts.forEach(o => { const b=document.createElement('button'); b.className='quiz-btn'; b.innerText=o; b.onclick=()=>checkAns(b, o===q.meaning); box.appendChild(b); }); speakWord(q.word); }
+        function checkAns(btn, ok) { if(isAnswering) return; isAnswering = true; if(ok) { btn.classList.add('correct'); score++; } else { btn.classList.add('wrong'); document.querySelectorAll('.quiz-btn').forEach(b=>{if(b.innerText===quizQuestions[currentQuestionIndex].meaning)b.classList.add('correct')}); } setTimeout(()=>{ if(++currentQuestionIndex < quizQuestions.length) renderQuestion(); else showRes(); }, 1500); }
         function showRes() { document.getElementById('quiz-game-area').style.display='none'; document.getElementById('quiz-result-area').style.display='block'; document.getElementById('final-score-title').innerText = Math.round(score/quizQuestions.length*100)+"分"; }
-
-        // === 工具 ===
         function speakWord(w) { const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; window.speechSynthesis.speak(u); }
         function loadImage(f) { return new Promise((r,j)=>{const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=URL.createObjectURL(f);}); }
         function cropImage(img,x,y,w,h) { return new Promise(r=>{const c=document.createElement('canvas'); c.width=img.width*w; c.height=img.height*h; const ctx=c.getContext('2d'); ctx.fillStyle="#FFF"; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,img.width*x,img.height*y,c.width,c.height,0,0,c.width,c.height); c.toBlob(b=>r(b),'image/jpeg',0.8);}); }
