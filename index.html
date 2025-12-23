@@ -4,87 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
-    <title>AI 英文全能助手 (V9.0 Gemini版)</title>
+    <title>AI 英文全能助手 (V9.1 完整版)</title>
+    
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js"></script>
+
     <style>
-        :root { --primary: #2563eb; --secondary: #f3f4f6; --text-dark: #1f2937; --text-gray: #6b7280; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
-        body { font-family: system-ui, sans-serif; background: #f8fafc; color: var(--text-dark); margin: 0; padding: 0 0 150px 0; line-height: 1.6; user-select: none; -webkit-user-select: none; }
-        header { background: white; padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); cursor: pointer; }
-        .nav-btn { background: var(--secondary); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+        /* === 基礎變數與重置 === */
+        :root { --primary: #2563eb; --primary-hover: #1d4ed8; --secondary: #f3f4f6; --text-dark: #1f2937; --text-gray: #6b7280; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: var(--text-dark); margin: 0; padding: 0; line-height: 1.6; user-select: none; -webkit-user-select: none; padding-bottom: 150px; }
+        
+        /* === 導航欄 === */
+        header { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .nav-btn { background: var(--secondary); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem; }
+
+        /* === 主容器 === */
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; }
-        .upload-area { border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 3rem; cursor: pointer; position: relative; transition: 0.2s; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 2rem; margin-bottom: 2rem; text-align: center; position: relative; }
+        
+        /* === 上傳與輸入區 === */
+        .upload-area { border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 3rem; transition: border-color 0.2s; cursor: pointer; position: relative; background: #fafafa; }
         .upload-area:hover { border-color: var(--primary); background: #eff6ff; }
-        input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        .action-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer; transition: 0.2s; background: var(--primary); color: white; }
-        .btn-outline { background: white; border: 1px solid #d1d5db; color: var(--text-dark); }
-        .btn-success { background: var(--success); color: white; }
+        input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        #manual-input-area { display: none; margin-top: 1rem; text-align: left; }
+        textarea { width: 100%; height: 150px; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; font-size: 1rem; resize: vertical; box-sizing: border-box; }
         
-        /* 閱讀區 */
-        #result-container { text-align: left; font-size: 1.15rem; line-height: 2; display: none; user-select: text; -webkit-user-select: text; }
-        .paragraph { margin-bottom: 1.5rem; text-align: justify; }
-        .word { cursor: pointer; border-bottom: 1px dotted transparent; transition: 0.2s; }
-        .word:hover { background: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
-        .def-word { cursor: pointer; border-bottom: 1px dotted #ccc; }
+        /* === 閱讀結果區 === */
+        #result-container { text-align: left; font-size: 1.15rem; line-height: 2; color: #374151; display: none; user-select: text; -webkit-user-select: text; /* 允許選取文字 */ }
+        .paragraph { margin-bottom: 1.5rem; text-align: justify; text-indent: 2rem; }
+        .word { cursor: pointer; border-bottom: 1px dotted transparent; transition: all 0.2s; }
+        .word:hover { background-color: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
         
-        /* AI 翻譯區 */
-        #ai-translation-box { display: none; margin-top: 2rem; padding: 1.5rem; background: #fff7ed; border-left: 5px solid var(--warning); text-align: left; border-radius: 0.5rem; }
+        /* 遞迴查詢單字樣式 */
+        .def-word { cursor: pointer; color: var(--text-dark); transition: color 0.2s; border-bottom: 1px dotted #ccc; }
+        .def-word:hover { color: var(--primary); background-color: #eff6ff; border-bottom-color: var(--primary); }
+
+        /* AI 翻譯與單字區 */
+        #ai-translation-box { display: none; margin-top: 2rem; padding: 1.5rem; background: #fff7ed; border-left: 5px solid var(--warning); text-align: left; border-radius: 0.5rem; font-size: 1rem; }
         #ai-vocab-list { display: none; margin-top: 2rem; text-align: left; }
         .ai-vocab-item { background: var(--secondary); padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 側邊欄 & 彈窗 */
-        .drawer { position: fixed; top: 0; right: -100%; width: 300px; height: 100vh; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; z-index: 200; display: flex; flex-direction: column; }
+        /* === 側邊欄 === */
+        .drawer { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background: white; box-shadow: -4px 0 15px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 200; display: flex; flex-direction: column; }
         .drawer.open { right: 0; }
-        .drawer-header { padding: 1rem; background: var(--primary); color: white; position: relative; }
-        .drawer-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; }
-        .drawer-content { flex: 1; overflow-y: auto; padding: 1rem; }
-        .list-item { background: var(--secondary); padding: 1rem; margin-bottom: 0.5rem; border-radius: 0.5rem; position: relative; }
-        .delete-btn { position: absolute; top: 5px; right: 10px; color: #999; cursor: pointer; }
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 300; }
-        .modal-content { background: white; padding: 2rem; width: 90%; max-width: 500px; border-radius: 1rem; max-height: 80vh; overflow-y: auto; position: relative; }
-        .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.5rem; cursor: pointer; }
+        .drawer-header { padding: 0; border-bottom: 1px solid #e5e7eb; background: var(--primary); color: white; position: relative; }
+        .drawer-close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.5rem; color: white; z-index: 999; line-height: 1; }
         
-        #console-log { position: fixed; bottom: 0; left: 0; width: 100%; height: 100px; background: #222; color: lime; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 999; opacity: 0.8; display: none; }
+        .tabs { display: flex; width: 100%; }
+        .tab { flex: 1; padding: 1rem; text-align: center; cursor: pointer; font-weight: bold; opacity: 0.7; transition: 0.2s; background: rgba(0,0,0,0.1); }
+        .tab.active { background: white; color: var(--primary); opacity: 1; border-top: 3px solid white; }
+        
+        .drawer-content { flex: 1; overflow-y: auto; padding: 1rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .list-item { background: var(--secondary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; position: relative; cursor: pointer; }
+        .item-title { font-weight: bold; color: var(--primary); font-size: 1.1em; }
+        .item-sub { font-size: 0.85em; color: var(--text-gray); margin-top: 0.25rem; }
+        .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; color: #9ca3af; cursor: pointer; font-size: 1.2rem; }
+        
+        /* === 按鈕樣式 === */
+        .action-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-outline { background: white; border: 1px solid #d1d5db; color: var(--text-dark); }
+        .btn-success { background: var(--success); color: white; }
+        
+        /* === 彈窗 & Loader === */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 300; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; position: relative; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
+        
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) { .drawer { width: 100%; right: -100%; } }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo" onclick="location.reload()">🚀 AI 英文助手 (Gemini)</div>
-        <button class="nav-btn" onclick="toggleDrawer()">📂 單字本 (<span id="vocab-count">0</span>)</button>
+        <div class="logo" onclick="location.reload()">🚀 AI 英文全能助手</div>
+        <button class="nav-btn" onclick="toggleDrawer()">📂 學習中心</button>
     </header>
 
     <div class="container">
         <div id="upload-card" class="card">
-            <h2 style="color:var(--primary); margin-bottom:0.5rem;">AI 智慧閱讀</h2>
-            <p style="color:var(--text-gray); font-size:0.9rem; margin-bottom:2rem;">上傳雜誌或文章圖片，Gemini 會自動排版、翻譯並解析。</p>
+            <h2 style="color:var(--primary); margin-bottom:0.5rem;">AI 智慧閱讀 (Gemini)</h2>
+            <p style="color:var(--text-gray); font-size:0.9rem; margin-bottom:2rem;">支援多欄位雜誌、手寫筆記，自動排版與翻譯。</p>
             
             <div class="upload-area">
-                <div style="font-size: 3rem;">🤖</div>
-                <h3>點擊上傳圖片 (自動分析)</h3>
+                <div style="font-size: 3rem;">📷</div>
+                <h3>點擊上傳圖片</h3>
+                <p style="color:gray; font-size:0.9rem;">自動識別版面，無需手動切圖</p>
                 <input type="file" id="imageInput" accept="image/*">
             </div>
             
             <div style="margin-top:2rem;">
-                <button class="action-btn btn-outline" onclick="toggleManualInput()">或 手動貼上文字</button>
+                <button class="action-btn btn-outline" style="width:auto;" onclick="toggleManualInput()">📝 或 手動貼上文字</button>
             </div>
             
-            <div id="manual-input-area" style="display:none; margin-top:1rem;">
-                <textarea id="manualText" style="width:100%; height:150px; padding:10px; border:1px solid #ccc; border-radius:5px;" placeholder="請在此貼上文章..."></textarea>
-                <button class="action-btn" style="margin-top:10px;" onclick="processManualText()">開始閱讀</button>
+            <div id="manual-input-area">
+                <textarea id="manualText" placeholder="請在此貼上英文文章..."></textarea>
+                <button class="action-btn btn-primary" style="margin-top:10px;" onclick="processManualText()">開始閱讀</button>
             </div>
 
-            <div id="status" style="margin-top:1rem; font-weight:bold;"></div>
+            <div id="status" style="margin-top:1.5rem; font-weight:bold;"></div>
         </div>
 
         <div id="result-card" class="card" style="display: none;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:1rem; margin-bottom:1rem;">
-                <h3 style="margin:0;">📖 英文原文</h3>
-                <button class="action-btn btn-success" onclick="saveCurrentArticle()" style="padding:0.4rem 1rem;">💾 存檔</button>
+                <h3 style="margin:0; color:var(--primary);">📖 閱讀模式</h3>
+                <button class="action-btn btn-success" onclick="saveCurrentArticle()" style="width:auto; padding:0.4rem 1rem;">💾 存檔</button>
             </div>
             
             <div id="result-container"></div>
@@ -103,18 +135,30 @@
 
     <div id="drawer" class="drawer">
         <div class="drawer-header">
-            <h3>📖 我的單字本</h3>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('vocab')" id="tab-vocab">單字本 (<span id="vocab-count">0</span>)</div>
+                <div class="tab" onclick="switchTab('article')" id="tab-article">文章庫</div>
+            </div>
             <span class="drawer-close" onclick="toggleDrawer()">&times;</span>
         </div>
-        <div class="drawer-content" id="vocab-list"></div>
-        <div style="padding:1rem; border-top:1px solid #eee;">
-            <button class="action-btn btn-outline" onclick="exportToCSV()" style="width:100%;">📤 匯出 Excel</button>
-            <button class="action-btn btn-outline" onclick="clearVocab()" style="width:100%; margin-top:10px; color:red; border-color:red;">🗑️ 清空</button>
+        <div class="drawer-content">
+            <div id="vocab-content" class="tab-content active">
+                <div id="vocab-list"></div>
+                <div style="margin-top:2rem;">
+                     <button class="action-btn btn-primary" onclick="exportToCSV()">📤 匯出 CSV</button>
+                     <button class="action-btn btn-outline" onclick="clearVocab()" style="width:100%; margin-top:10px; color:var(--danger); border-color:var(--danger);">🗑️ 清空單字</button>
+                </div>
+            </div>
+            <div id="article-content" class="tab-content">
+                <div id="article-list"></div>
+                <div style="margin-top:2rem;">
+                     <button class="action-btn btn-outline" onclick="clearArticles()" style="width:100%; color:var(--danger); border-color:var(--danger);">🗑️ 清空文章</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="modal"><div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span><div id="modal-body"></div></div></div>
-    <div id="console-log"></div>
 
     <script>
         // ==========================================
@@ -126,6 +170,7 @@
         let savedVocab = JSON.parse(localStorage.getItem('myVocab') || '[]');
         let savedArticles = JSON.parse(localStorage.getItem('myArticles') || '[]');
         let currentArticleText = "";
+        let currentArticleId = null;
 
         // UI 元素
         const imageInput = document.getElementById('imageInput');
@@ -139,13 +184,14 @@
         const vocabCount = document.getElementById('vocab-count');
 
         updateVocabUI();
+        updateArticleUI();
 
         // 1. 上傳圖片 -> 呼叫 Vercel Gemini
         imageInput.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            status.innerHTML = `<div class="loader"></div><p>AI 正在閱讀並分析圖片，請稍候 (約 5-10 秒)...</p>`;
+            status.innerHTML = `<div class="loader"></div><p>AI 正在閱讀並分析圖片 (約 5-8 秒)...</p>`;
             
             const formData = new FormData();
             formData.append("file", file);
@@ -156,20 +202,20 @@
                     body: formData
                 });
 
-                if (!response.ok) throw new Error("Server Error");
+                if (!response.ok) throw new Error("API 連線錯誤 (請檢查 Vercel 狀態)");
 
                 const data = await response.json();
                 
-                // 處理 Gemini 回傳的資料
                 if (data.english) {
+                    currentArticleId = null; // 新文章重置 ID
                     showResult(data);
                 } else {
-                    throw new Error("AI 無法辨識內容");
+                    throw new Error("AI 無法辨識內容或格式錯誤");
                 }
 
             } catch (err) {
                 console.error(err);
-                status.innerHTML = `<p style="color:red;">發生錯誤: ${err.message}<br>請確認 Vercel 網址是否正確。</p>`;
+                status.innerHTML = `<p style="color:red;">發生錯誤: ${err.message}</p>`;
             }
         });
 
@@ -187,6 +233,8 @@
             if (data.chinese) {
                 document.getElementById('ai-translation-box').style.display = 'block';
                 document.getElementById('ai-translation-text').innerText = converter(data.chinese);
+            } else {
+                document.getElementById('ai-translation-box').style.display = 'none';
             }
 
             // C. 顯示 AI 推薦單字
@@ -202,18 +250,19 @@
                             <strong>${v.word}</strong> <span style="color:#666; font-size:0.9em;">${v.part}</span><br>
                             <span style="font-size:0.9em;">${converter(v.trans)}</span>
                         </div>
-                        <button class="action-btn" style="padding:5px 10px; font-size:0.8em;" onclick="quickSave('${v.word}', '${v.trans}')">＋ 收藏</button>
+                        <button class="action-btn btn-outline" style="padding:5px 10px; width:auto;" onclick="quickSave('${v.word}', '${v.trans}')">＋ 收藏</button>
                     `;
                     vocabDiv.appendChild(div);
                 });
+            } else {
+                document.getElementById('ai-vocab-list').style.display = 'none';
             }
         }
 
-        // 3. 英文互動顯示 (點擊查單字)
+        // 3. 英文互動顯示 (點擊 + 片語反白)
         function displayInteractiveText(text) {
             resultContainer.style.display = 'block';
             resultContainer.innerHTML = '';
-            // 簡單分段
             const paragraphs = text.split(/\n\s*\n/);
             
             paragraphs.forEach(p => {
@@ -225,7 +274,10 @@
                     const clean = w.replace(/[^a-zA-Z]/g, "");
                     if (clean.length > 0) {
                         span.className = 'word';
-                        span.onclick = () => lookupWord(clean);
+                        span.onclick = (e) => {
+                            e.stopPropagation(); // 防止反白觸發
+                            lookupWord(clean);
+                        };
                     }
                     pDiv.appendChild(span);
                 });
@@ -233,12 +285,29 @@
             });
         }
 
-        // 4. 查單字 (保持原本邏輯)
+        // 🔥 片語反白監聽
+        resultContainer.addEventListener('mouseup', handleSelection);
+        resultContainer.addEventListener('touchend', handleSelection);
+
+        function handleSelection() {
+            setTimeout(() => {
+                const selection = window.getSelection();
+                const text = selection.toString().trim();
+                // 規則：有內容，有空格(片語)，長度不超過6個字
+                if (text.length > 0 && text.indexOf(' ') > -1 && text.split(' ').length <= 6) {
+                    lookupWord(text);
+                    selection.removeAllRanges();
+                }
+            }, 100);
+        }
+
+        // 4. 查單字 (含遞迴查詢)
         async function lookupWord(text) {
             const q = text.replace(/[^a-zA-Z\s]/g, "").trim(); 
             if(!q) return;
+            
             modal.style.display = 'flex';
-            modalBody.innerHTML = `<div class="loader"></div>`;
+            modalBody.innerHTML = `<div class="loader"></div><p style="text-align:center">查詢中: ${q}</p>`;
             
             try {
                 const [resEn, resZh] = await Promise.all([
@@ -247,22 +316,25 @@
                 ]);
                 
                 const zhData = await resZh.json();
-                let zhText = zhData.responseData?.translatedText || "失敗";
+                let zhText = zhData.responseData?.translatedText || "翻譯失敗";
                 if(!/[\u4e00-\u9fa5]/.test(zhText) && zhData.matches) {
                     const match = zhData.matches.find(m => /[\u4e00-\u9fa5]/.test(m.translation));
                     if(match) zhText = match.translation;
                 }
                 zhText = converter(zhText);
 
-                // UI
+                const isSaved = savedVocab.some(i => i.word.toLowerCase() === q.toLowerCase());
+                const starBtnText = isSaved ? '⭐ 已收藏' : '☆ 收藏';
+                const starBtnClass = isSaved ? 'btn-primary' : 'btn-outline';
+
                 let html = `
                     <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
                         <h2 style="margin:0; color:var(--primary);">${q}</h2>
                         <button onclick="speak('${q}')" style="background:none; border:none; cursor:pointer; font-size:1.5rem;">🔊</button>
                         <div style="flex:1;"></div>
-                        <button class="action-btn" onclick="quickSave('${q}', '${zhText}')">★ 收藏</button>
+                        <button class="action-btn ${starBtnClass}" style="width:auto;" onclick="quickSave('${q}', '${zhText}')">${starBtnText}</button>
                     </div>
-                    <div style="background:#fff7ed; padding:10px; border-radius:5px; margin-bottom:15px;">
+                    <div style="background:#fff7ed; padding:10px; border-radius:5px; margin-bottom:15px; border-left:4px solid var(--warning);">
                         <strong>${zhText}</strong>
                     </div>
                 `;
@@ -277,15 +349,17 @@
                         });
                         html += `</div>`;
                     });
+                } else {
+                    html += `<p style="color:gray; font-size:0.9rem;">(此為組合詞或片語，僅提供翻譯)</p>`;
                 }
                 modalBody.innerHTML = html;
 
             } catch(e) {
-                modalBody.innerHTML = "查詢失敗";
+                modalBody.innerHTML = "<p>查詢失敗，請檢查網路。</p>";
             }
         }
 
-        // 遞迴查詢 helper
+        // 輔助：解釋文字轉互動
         function makeDefInteractive(text) {
             return text.split(/(\s+)/).map(part => {
                 const word = part.replace(/[^a-zA-Z]/g, "");
@@ -294,15 +368,54 @@
             }).join('');
         }
 
-        // 5. 輔助功能
+        // 5. 資料存取與管理
         function quickSave(word, mean) {
             if(!savedVocab.some(i => i.word.toLowerCase() === word.toLowerCase())) {
                 savedVocab.push({ word, meaning: mean, date: new Date().toLocaleDateString() });
                 localStorage.setItem('myVocab', JSON.stringify(savedVocab));
                 updateVocabUI();
                 alert(`已收藏: ${word}`);
+                closeModal();
             } else {
-                alert("這個字已經在單字本囉！");
+                alert("單字已存在！");
+            }
+        }
+
+        function saveCurrentArticle() {
+            if(!currentArticleText) return;
+            
+            // 覆寫邏輯
+            if (currentArticleId) {
+                const idx = savedArticles.findIndex(a => a.id == currentArticleId);
+                if (idx !== -1) {
+                    if(confirm(`要覆寫文章「${savedArticles[idx].title}」嗎？\n(取消則另存新檔)`)) {
+                        savedArticles[idx].content = currentArticleText;
+                        savedArticles[idx].date = new Date().toLocaleDateString();
+                        localStorage.setItem('myArticles', JSON.stringify(savedArticles));
+                        updateArticleUI();
+                        alert("已更新！");
+                        return;
+                    }
+                }
+            }
+
+            const title = prompt("請輸入文章標題:", "AI 閱讀筆記");
+            if(title) {
+                const newId = Date.now();
+                savedArticles.unshift({ id: newId, title, content: currentArticleText, date: new Date().toLocaleDateString() });
+                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
+                updateArticleUI();
+                currentArticleId = newId;
+                alert("已存檔！");
+            }
+        }
+
+        function loadArticle(id) {
+            const article = savedArticles.find(a => a.id == id);
+            if (article) {
+                currentArticleId = id;
+                showResult({ english: article.content, chinese: null, vocab: [] });
+                toggleDrawer();
             }
         }
 
@@ -310,11 +423,12 @@
             const list = document.getElementById('vocab-list');
             list.innerHTML = '';
             document.getElementById('vocab-count').innerText = savedVocab.length;
+            if(!savedVocab.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無單字</div>'; return; }
             [...savedVocab].reverse().forEach(v => {
                 const div = document.createElement('div');
                 div.className = 'list-item';
                 div.innerHTML = `
-                    <div class="delete-btn" onclick="deleteVocab('${v.word}')">&times;</div>
+                    <div class="delete-btn" onclick="deleteVocab('${v.word}', event)">&times;</div>
                     <strong onclick="lookupWord('${v.word}')" style="cursor:pointer; color:var(--primary);">${v.word}</strong>
                     <div style="font-size:0.9em; color:#666;">${v.meaning}</div>
                 `;
@@ -322,45 +436,53 @@
             });
         }
 
-        function deleteVocab(w) {
-            if(confirm('刪除?')) {
-                savedVocab = savedVocab.filter(v => v.word !== w);
-                localStorage.setItem('myVocab', JSON.stringify(savedVocab));
-                updateVocabUI();
-            }
+        function updateArticleUI() {
+            const list = document.getElementById('article-list');
+            list.innerHTML = '';
+            if(!savedArticles.length) { list.innerHTML = '<div style="text-align:center; color:gray; margin-top:2rem;">無文章</div>'; return; }
+            savedArticles.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="delete-btn" onclick="deleteArticle(${a.id}, event)">&times;</div>
+                    <strong style="color:var(--primary);">${a.title}</strong>
+                    <div style="font-size:0.85em; color:#666;">${a.date} · 字數: ${a.content.length}</div>
+                `;
+                div.onclick = () => loadArticle(a.id);
+                list.appendChild(div);
+            });
         }
 
-        function clearVocab() { if(confirm('清空全部?')) { savedVocab = []; localStorage.setItem('myVocab', '[]'); updateVocabUI(); } }
-        
-        function saveCurrentArticle() {
-            if(!currentArticleText) return;
-            const title = prompt("文章標題:", "AI 閱讀筆記");
-            if(title) {
-                savedArticles.unshift({ id: Date.now(), title, content: currentArticleText, date: new Date().toLocaleDateString() });
-                localStorage.setItem('myArticles', JSON.stringify(savedArticles));
-                alert("已存檔！(可在側邊欄查看)");
-            }
-        }
+        function deleteVocab(w, e) { e.stopPropagation(); if(confirm('刪除單字?')) { savedVocab = savedVocab.filter(v => v.word !== w); localStorage.setItem('myVocab', JSON.stringify(savedVocab)); updateVocabUI(); } }
+        function clearVocab() { if(confirm('清空所有單字?')) { savedVocab = []; localStorage.setItem('myVocab', '[]'); updateVocabUI(); } }
+        function deleteArticle(id, e) { e.stopPropagation(); if(confirm('刪除文章?')) { savedArticles = savedArticles.filter(a => a.id != id); localStorage.setItem('myArticles', JSON.stringify(savedArticles)); updateArticleUI(); } }
+        function clearArticles() { if(confirm('清空所有文章?')) { savedArticles = []; localStorage.setItem('myArticles', '[]'); updateArticleUI(); } }
 
         function exportToCSV() {
-            if(!savedVocab.length) return alert("沒單字");
+            if(!savedVocab.length) return alert("無資料");
             let csv = "\uFEFF單字,解釋,日期\n";
             savedVocab.forEach(v => csv += `${v.word},${v.meaning},${v.date}\n`);
             const url = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            const a = document.createElement('a'); a.href = url; a.download = 'vocab.csv'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = `Vocab_${new Date().toLocaleDateString()}.csv`; a.click();
         }
 
+        // 其他功能
         function toggleManualInput() {
             const div = document.getElementById('manual-input-area');
             div.style.display = div.style.display === 'none' ? 'block' : 'none';
         }
-
         function processManualText() {
             const text = document.getElementById('manualText').value;
-            if(!text) return;
-            showResult({ english: text, chinese: null, vocab: [] }); // 手動模式沒有 AI 翻譯
+            if(!text.trim()) return alert("請輸入內容");
+            currentArticleId = null;
+            showResult({ english: text });
         }
-
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`${tab}-content`).classList.add('active');
+        }
         function speak(w) { const u = new SpeechSynthesisUtterance(w); u.lang='en-US'; window.speechSynthesis.speak(u); }
         function toggleDrawer() { drawer.classList.toggle('open'); }
         function closeModal() { modal.style.display = 'none'; }
