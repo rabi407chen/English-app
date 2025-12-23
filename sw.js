@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-english-v9'; // 升級為 v9
+const CACHE_NAME = 'ai-english-v11'; // 升級為 v11
 const ASSETS = [
     './',
     './index.html',
@@ -20,7 +20,8 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
-    if (url.hostname.includes('ocr.space') || 
+    // 排除所有外部 API
+    if (url.hostname.includes('vercel.app') || 
         url.hostname.includes('dictionaryapi.dev') || 
         url.hostname.includes('mymemory.translated.net') ||
         url.hostname.includes('jsdelivr.net')) return;
